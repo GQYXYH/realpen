@@ -19,8 +19,3 @@ from gym_brt.envs.reinforcementlearning_wrappers.rl_wrappers import (
     convert_state,
     convert_state_back
 )
-
-from gym_brt.envs.reinforcementlearning_wrappers.rl_vision_wrappers import (
-    SwingUpVisionWrapper,
-    BalanceVisionWrapper
-)
