@@ -15,6 +15,7 @@ except ImportError:
     print("Warning: Can not import QubeHardware in qube_base_env.py")
 
 from gym_brt.quanser import QubeSimulator
+from gym_brt.envs.simulation.mujoco import QubeMujoco
 from gym_brt.envs.rendering import QubeRenderer
 
 
@@ -30,13 +31,7 @@ def normalize_angle(angle):
 class QubeBaseEnv(gym.Env):
     """A base class for all qube-based environments."""
 
-    def __init__(
-        self,
-        frequency=250,
-        batch_size=2048,
-        use_simulator=False,
-        encoder_reset_steps=int(1e8),
-    ):
+    def __init__(self, frequency=250, batch_size=2048, use_simulator=False, simulation_mode='ode', encoder_reset_steps=int(1e8),):
         self.observation_space = spaces.Box(-OBS_MAX, OBS_MAX, dtype=np.float32)
         self.action_space = spaces.Box(-ACT_MAX, ACT_MAX, dtype=np.float32)
 
@@ -54,18 +49,30 @@ class QubeBaseEnv(gym.Env):
 
         # Open the Qube
         if use_simulator:
-            # TODO: Check assumption: ODE integration should be ~ once per ms
-            integration_steps = int(np.ceil(1000 / self._frequency))
-            self.qube = QubeSimulator(
-                forward_model="ode",
-                frequency=self._frequency,
-                integration_steps=integration_steps,
-                max_voltage=MAX_MOTOR_VOLTAGE,
-            )
+            if simulation_mode == 'ode':
+                # TODO: Check assumption: ODE integration should be ~ once per ms
+                integration_steps = int(np.ceil(1000 / self._frequency))
+                self.qube = QubeSimulator(
+                    forward_model="ode",
+                    frequency=self._frequency,
+                    integration_steps=integration_steps,
+                    max_voltage=MAX_MOTOR_VOLTAGE,
+                )
+                self._own_rendering = True
+            elif simulation_mode == 'mujoco':
+                self.qube = QubeMujoco()
+                self._own_rendering = False
+            elif simulation_mode == 'bullet':
+                self._own_rendering = False
+                raise NotImplementedError("Simulation with Bullet not implemented at this point.")
+            else:
+                raise ValueError(f"Unsupported simulation type '{simulation_mode}'. "
+                                 f"Valid ones are 'ode', 'mujoco' and 'bullet'.")
         else:
             self.qube = QubeHardware(
                 frequency=self._frequency, max_voltage=MAX_MOTOR_VOLTAGE
             )
+            self._own_rendering = True
         self.qube.__enter__()
 
         self.seed()
@@ -114,6 +121,7 @@ class QubeBaseEnv(gym.Env):
         return self._get_state()
 
     def _get_state(self):
+        # TODO: Ensure that variables are set correctly
         return np.array(
             [self._theta, self._alpha, self._theta_dot, self._alpha_dot],
             dtype=np.float64,
@@ -160,9 +168,13 @@ class QubeBaseEnv(gym.Env):
         return state, reward, done, info
 
     def render(self, mode="human"):
-        if self._viewer is None:
-            self._viewer = QubeRenderer(self._theta, self._alpha, self._frequency)
-        self._viewer.render(self._theta, self._alpha)
+        # TODO: Different modes
+        if self._own_rendering:
+            if self._viewer is None:
+                    self._viewer = QubeRenderer(self._theta, self._alpha, self._frequency)
+            self._viewer.render(self._theta, self._alpha)
+        else:
+            self.qube.render()
 
     def close(self, type=None, value=None, traceback=None):
         # Safely close the Qube (important on hardware)

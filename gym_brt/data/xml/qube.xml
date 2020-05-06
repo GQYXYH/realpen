@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mujoco model="qube">
+    <compiler inertiafromgeom="true"/>
+    <option gravity="0 0 -9.81" integrator="RK4" timestep="0.02"/>
+
+    <asset>
+        <include file="shared_assets.xml"/>
+    </asset>
+
+    <default>
+		<geom contype="0"/> <!-- Darf das so sein? Ansonsten trifft der Motor laut Mujoco auf die Base und bewegt sich nicht. Standard ist 3 -->
+        <motor ctrlrange="-1 1"/>
+	</default>
+
+    <worldbody>
+        <light diffuse=".8 .8 .8" dir="0 0 -2" directional="false" pos="2 -5 30" specular="0.9 0.9 0.9" castshadow="false"/>
+
+        <camera pos="-5 -5 15" name="view" euler="-30 0 -45"/>
+
+        <geom conaffinity="0" contype="0" name="ground" pos="0 0 0" rgba="0.9 0.9 0.9 1" size="50 50 1" type="plane"/>
+
+        <body name="qube0:body" pos="0 0 0">
+			<geom mesh="qube0:base" name="qube0:base" type="mesh" rgba="0 0 0 1"/>
+
+            <body name="motor" pos="0 0 0">
+				<joint axis="0 0 1" pos="2.005 -2.05 4.2" name="base_motor" range="-90 90" type="hinge"/>
+                <geom mesh="qube0:motor" name="qube0:motor" type="mesh" rgba=".9 0 0 1"/>
+
+                <body name="arm" pos="0 0 0">
+				    <geom mesh="qube0:arm" name="qube0:arm" type="mesh" rgba="1.5 1.5 1.5 1"/>
+
+                    <body name="pole">
+				        <joint axis="0 1 0" pos="2.005 -5.34 4.975" name="arm_pole" range="-90 90" type="hinge"/>
+				        <geom mesh="qube0:pole" name="qube0:pole" type="mesh" rgba=".9 0 0 1"/>
+                    </body>
+                </body>
+			</body>
+		</body>
+    </worldbody>
+
+    <actuator>
+        <motor gear="1000" joint="base_motor" name="motor_rotation"/>
+    </actuator>
+</mujoco>
