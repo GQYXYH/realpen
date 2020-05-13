@@ -41,5 +41,5 @@ def interact_with_balance_env():
                     break
 
 if __name__ == '__main__':
-    # interact_with_down_environment()
-    interact_with_balance_env()
+    interact_with_down_environment()
+    # interact_with_balance_env()
