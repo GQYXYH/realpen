@@ -1,3 +1,8 @@
+"""
+Adapted from:
+https://github.com/openai/gym/blob/master/gym/envs/mujoco/mujoco_env.py
+"""
+
 from collections import OrderedDict
 import os
 
@@ -36,7 +41,7 @@ class MujocoBase(object):
     """
 
     def __init__(self, model_path, frame_skip):
-        if model_path.startswith("/"):
+        if model_path.startswith("/") or model_path.startswith("../"):
             fullpath = model_path
         else:
             fullpath = os.path.join(os.path.dirname(__file__), "assets", model_path)
@@ -59,7 +64,7 @@ class MujocoBase(object):
 
         self._set_action_space()
         action = self.action_space.sample()
-        observation, _info = self.step(action)
+        observation = self.step(action) # observation, _info = self.step(action)
         self._set_observation_space(observation)
 
         self.seed()

@@ -4,7 +4,7 @@
     <texture type="skybox" builtin="gradient" rgb1="0.44 0.85 0.56" rgb2="0.46 0.87 0.58" width="32" height="32"/>
 
     <mesh file="../meshes/qube_base.stl" name="qube0:base" />
-    <mesh file="../meshes/qube_motor.stl" name="qube0:motor"/>
-    <mesh file="../meshes/qube_arm.stl" name="qube0:arm"/>
-    <mesh file="../meshes/qube_pole.stl" name="qube0:pole"/>
+    <mesh file="../meshes/qube_motor_cs.stl" name="qube0:motor"/>
+    <mesh file="../meshes/qube_arm_cs.stl" name="qube0:arm"/>
+    <mesh file="../meshes/qube_pole_cs.stl" name="qube0:pole"/>
 </mujoco>

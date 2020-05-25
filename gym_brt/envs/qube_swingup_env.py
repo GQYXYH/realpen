@@ -47,7 +47,7 @@ from gym_brt.envs import swing_up_reward
 
 class QubeSwingupEnv(QubeBaseEnv):
     def _reward(self):
-        return swing_up_reward(self._theta, self._theta, self._target_angle)
+        return swing_up_reward(self._theta, self._alpha, self._target_angle)
 
     def _isdone(self):
         done = False

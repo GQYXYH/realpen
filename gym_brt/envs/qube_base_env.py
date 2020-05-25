@@ -14,10 +14,6 @@ try:
 except ImportError:
     print("Warning: Can not import QubeHardware in qube_base_env.py")
 
-from gym_brt.quanser import QubeSimulator
-from gym_brt.envs.simulation.mujoco import QubeMujoco
-from gym_brt.envs.rendering import QubeRenderer
-
 
 MAX_MOTOR_VOLTAGE = 18
 ACT_MAX = np.asarray([MAX_MOTOR_VOLTAGE], dtype=np.float64)
@@ -51,6 +47,7 @@ class QubeBaseEnv(gym.Env):
         if use_simulator:
             if simulation_mode == 'ode':
                 # TODO: Check assumption: ODE integration should be ~ once per ms
+                from gym_brt.quanser import QubeSimulator
                 integration_steps = int(np.ceil(1000 / self._frequency))
                 self.qube = QubeSimulator(
                     forward_model="ode",
@@ -60,7 +57,8 @@ class QubeBaseEnv(gym.Env):
                 )
                 self._own_rendering = True
             elif simulation_mode == 'mujoco':
-                self.qube = QubeMujoco()
+                from gym_brt.envs.simulation.mujoco import QubeMujoco
+                self.qube = QubeMujoco()  # TODO: Frequency
                 self._own_rendering = False
             elif simulation_mode == 'bullet':
                 self._own_rendering = False
@@ -77,6 +75,8 @@ class QubeBaseEnv(gym.Env):
 
         self.seed()
         self._viewer = None
+
+        self._episode_reward = 0
 
     def __enter__(self):
         return self
@@ -99,6 +99,7 @@ class QubeBaseEnv(gym.Env):
         self._theta, self._alpha, self._theta_dot, self._alpha_dot = state
 
     def reset(self):
+        self._episode_reward = 0
         self._episode_steps = 0
         # Occasionaly reset the enocoders to remove sensor drift
         if self._steps_since_encoder_reset >= self._encoder_reset_steps:
@@ -121,7 +122,6 @@ class QubeBaseEnv(gym.Env):
         return self._get_state()
 
     def _get_state(self):
-        # TODO: Ensure that variables are set correctly
         return np.array(
             [self._theta, self._alpha, self._theta_dot, self._alpha_dot],
             dtype=np.float64,
@@ -154,6 +154,7 @@ class QubeBaseEnv(gym.Env):
         state = self._get_state()
         reward = self._reward()
         done = self._isdone()
+        self._episode_reward += reward
         info = {
             "theta": self._theta,
             "alpha": self._alpha,
@@ -171,6 +172,7 @@ class QubeBaseEnv(gym.Env):
         # TODO: Different modes
         if self._own_rendering:
             if self._viewer is None:
+                    from gym_brt.envs.rendering import QubeRenderer
                     self._viewer = QubeRenderer(self._theta, self._alpha, self._frequency)
             self._viewer.render(self._theta, self._alpha)
         else:

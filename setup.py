@@ -2,6 +2,14 @@ import os
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext as _build_ext
 
+# Environment-specific dependencies.
+extras = {
+    'mujoco': ['mujoco_py>=1.50', 'imageio'],
+    #'bullet': ['pybullet>=1.7.8']
+}
+
+# Meta dependency groups.
+extras['all'] = [item for group in extras.values() for item in group]
 
 class build_ext(_build_ext):
     def finalize_options(self):
@@ -52,9 +60,12 @@ setup(
     cmdclass={"build_ext": build_ext} if is_hil_sdk_installed else {},
     install_requires=["numpy", "gym"],
     setup_requires=["numpy"],
+    extras_require=extras,
     ext_modules=extensions if is_hil_sdk_installed else None,
-    description="Blue River's OpenAI Gym wrapper around Quanser hardware.",
+    description="Adapted version of Blue River's OpenAI Gym wrapper around Quanser hardware.",
     url="https://github.com/BlueRiverTech/quanser-openai-driver/",
-    author="Blue River Technology",
+    author="Blue River Technology, "
+           "Intelligent Control Systems Group (Max Planck Institute for Intelligent Systems), "
+           "Institute for Data Science in Mechanical Engineering (RWTH Aachen University)",
     license="MIT",
 )

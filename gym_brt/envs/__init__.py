@@ -19,3 +19,17 @@ from gym_brt.envs.reinforcementlearning_wrappers.rl_wrappers import (
     convert_state,
     convert_state_back
 )
+
+from gym.envs.registration import register
+
+register(
+    id='QubeBeginDownEnv-v1',
+    entry_point='gym_brt.envs:QubeBeginDownEnv',
+    max_episode_steps=1000,
+    )
+
+register(
+    id='QubeBeginUpEnv-v1',
+    entry_point='gym_brt.envs:QubeBeginUpEnv',
+    max_episode_steps=1000,
+    )

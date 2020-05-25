@@ -47,7 +47,7 @@ from gym_brt.envs import balance_reward
 
 class QubeBalanceEnv(QubeBaseEnv):
     def _reward(self):
-        return balance_reward(self._theta, self._theta, self._target_angle)
+        return balance_reward(self._theta, self._alpha, self._target_angle)
 
     def _isdone(self):
         done = False

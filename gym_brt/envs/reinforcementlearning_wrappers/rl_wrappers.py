@@ -23,8 +23,12 @@ FREQUENCY = 100
 
 
 class QubeBeginDownEnv(QubeSwingupEnv):
-    def __init__(self, frequency=FREQUENCY, batch_size=2048, use_simulator=False, encoder_reset_steps=int(1e8)):
-        super().__init__(frequency, batch_size, use_simulator, encoder_reset_steps)
+    #def __init__(self, frequency=FREQUENCY, batch_size=2048, use_simulator=False, simuilator encoder_reset_steps=int(1e8)):
+    #     super().__init__(frequency, batch_size, use_simulator, encoder_reset_steps)
+    #     self.observation_space = spaces.Box(-OBS_MAX, OBS_MAX, dtype=np.float32)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.observation_space = spaces.Box(-OBS_MAX, OBS_MAX, dtype=np.float32)
 
     def _get_state(self):
@@ -39,9 +43,9 @@ class QubeBeginDownEnv(QubeSwingupEnv):
         )
     
 class RandomStartEnv(QubeBeginDownEnv):
-    def __init__(self, frequency=FREQUENCY, batch_size=2048, use_simulator=False, encoder_reset_steps=int(1e8)):
-        assert use_simulator, "Just possible in simulation"
-        super().__init__(frequency, batch_size, use_simulator, encoder_reset_steps)
+    def __init__(self, **kwargs):
+        assert kwargs["use_simulator"], "Just possible in simulation"
+        super().__init__(**kwargs)
 
     def reset(self):
         theta = 60 /180*np.pi*(2*np.random.rand()-1)
@@ -61,7 +65,7 @@ class NoisyEnv(QubeBeginDownEnv):
              np.cos(self._alpha) + np.random.normal(0.0, sigma),
              np.sin(self._alpha) + np.random.normal(0.0, sigma),
              self._theta_dot + np.random.normal(0.0, sigma_vel),
-             self._alpha_dot +np.random.normal(0.0, sigma_vel)],
+             self._alpha_dot + np.random.normal(0.0, sigma_vel)],
             dtype=np.float64,
         )
 
@@ -73,8 +77,8 @@ class NoisyEnv(QubeBeginDownEnv):
 
 
 class QubeBeginUpEnv(QubeBalanceEnv):
-    def __init__(self, frequency=FREQUENCY, batch_size=2048, use_simulator=False, encoder_reset_steps=int(1e8)):
-        super().__init__(frequency, batch_size, use_simulator, encoder_reset_steps)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.observation_space = spaces.Box(-OBS_MAX, OBS_MAX, dtype=np.float32)
 
     def _get_state(self):
