@@ -7,11 +7,14 @@ from gym_brt.envs.reinforcementlearning_wrappers.rl_wrappers import FREQUENCY
 
 from gym_brt.quanser import QubeHardware, QubeSimulator
 from gym_brt.quanser.qube_interfaces import forward_model_ode
-from simulator_tuning.qube_simulator_optimize import forward_model_ode_optimize
 
-from gym_brt.control.control import _convert_state
+from gym_brt.control.control import _convert_state, QubeFlipUpControl
+
 
 # No input
+from simulator_tuning.qube_simulator_optimize import forward_model_ode_optimize
+
+
 def zero_policy(state, **kwargs):
     return np.array([0.0])
 
@@ -130,7 +133,6 @@ def square_wave_flip_and_hold_policy(state, **kwargs):
 # Run on the hardware
 def run_qube(begin_up, policy, nsteps, frequency, integration_steps):
     with QubeHardware(frequency=frequency, max_voltage=3.0) as qube:
-
         if begin_up is True:
             s = qube.reset_up()
         elif begin_up is False:
@@ -142,13 +144,13 @@ def run_qube(begin_up, policy, nsteps, frequency, integration_steps):
             s = qube.step(a)
 
         init_state = s
-        a = policy(s, step=0)
+        a = policy(s)
         s_hist = [s]
         a_hist = [a]
 
         for i in range(nsteps):
             s = qube.step(a)
-            a = policy(s, step=i + 1, frequency=frequency)
+            a = policy(s)
 
             s_hist.append(s)  # States
             a_hist.append(a)  # Actions
@@ -217,7 +219,7 @@ def plot_results(hists, labels, colors=None, normalize=None):
 
 def run_real():
     # Natural response when starting at α = 0 + noise (upright/inverted)
-    hist_qube, init_state = run_qube(False, square_wave_policy, nsteps, frequency, i_steps)
+    hist_qube, init_state = run_qube(True, zero_policy, nsteps, frequency, i_steps)
 
     import pickle
     outfile = open("../hist_qube", "wb")
@@ -232,7 +234,7 @@ def run(params=None, visualize=False):
     hist_qube = pickle.load(infile)
     infile = open("../init_state", "rb")
     init_state = pickle.load(infile)
-    hist_ode = run_sim(init_state, square_wave_policy, nsteps, frequency, i_steps, params=params)
+    hist_ode = run_sim(init_state, energy_control_policy, nsteps, frequency, i_steps, params=params)
     print(params)
 
     if visualize:
