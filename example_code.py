@@ -34,12 +34,12 @@ def interact_with_balance_env():
         controller = QubeHoldControl(sample_freq=frequency, env=env)
         for episode in range(2):
             state = env.reset()
-            for step in range(5000):
+            for step in range(30000):
                 action = controller.action(state)
                 state, reward, done, info = env.step(action)
                 if done:
                     break
 
 if __name__ == '__main__':
-    # interact_with_down_environment()
-    interact_with_balance_env()
+    interact_with_down_environment()
+    # interact_with_balance_env()
