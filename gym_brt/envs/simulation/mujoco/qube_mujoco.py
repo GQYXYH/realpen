@@ -14,13 +14,19 @@ class QubeMujoco(QubeSimulatorBase, MujocoBase):
     def reset(self):
         MujocoBase.reset(self)
 
-    def __init__(self, frequency=250, integration_steps=1, max_voltage=18.0):
+    def __init__(self,
+                 frequency: float = 250,
+                 integration_steps: int = 1,
+                 max_voltage: float = 18.0
+        ):
 
         self._dt = 1.0 / frequency # TODO: See MujocoBase dt property
         self._integration_steps = integration_steps
         self._max_voltage = max_voltage
 
-        MujocoBase.__init__(self, XML_PATH, 2)
+        MujocoBase.__init__(self, XML_PATH, integration_steps)
+        self.model.opt.timestep = self._dt
+        #self.frame_skip = int1 / frequency * self.model.opt.timestep)
 
         self.state = self._get_obs()
         self._modders = dict()
@@ -41,15 +47,25 @@ class QubeMujoco(QubeSimulatorBase, MujocoBase):
         theta, alpha_before = self.sim.data.qpos
         theta_dot, alpha_dot = self.sim.data.qvel
 
-        times = int(alpha_before // np.pi)
-        residual = alpha_before % np.pi
+        theta = self.angle_normalize(theta)
+        alpha = -self.angle_normalize(alpha_before)
 
-        alpha = np.pi - residual if times % 2 != 0 else -1*residual
+        return np.array([theta, alpha, theta_dot, -alpha_dot])
 
-        return np.array([theta, alpha, theta_dot, alpha_dot])
+    def angle_normalize(self, x: float) -> float:
+        return ((x + np.pi) % (2 * np.pi)) - np.pi
 
-    def angle_normalize(x):
-        return (((x + np.pi) % (2 * np.pi)) - np.pi) # TODO: check how to implement that
+    def gen_torque(self, action):
+        # Motor
+        Rm = 8.4  # Resistance
+        kt = 0.033  # 0.042  # Current-torque (N-m/A)
+        km = 0.042  # 0.042  # Back-emf constant (V-s/rad)
+
+        theta_dot, _ = self.sim.data.qvel
+
+        Vm = action
+        tau = -(kt * (Vm - km * theta_dot)) / Rm  # torque
+        return tau
 
     def viewer_setup(self):
         v = self.viewer
@@ -64,26 +80,26 @@ class QubeMujoco(QubeSimulatorBase, MujocoBase):
 
     def step(self, action, led=None):
         action = np.clip(action, -self._max_voltage, self._max_voltage)
-        action = -1*action  # Multiply by -1 to match the real direction
-        self.do_simulation(action, self.frame_skip)
+        action = self.gen_torque(action)
+        self.do_simulation(action)
         self.state = self._get_obs()
         return self.state
 
     def reset_model(self):
-        qpos = self.init_qpos + self.np_random.uniform(size=self.model.nq, low=-0.01, high=0.01)
-        qvel = self.init_qvel + self.np_random.uniform(size=self.model.nv, low=-0.01, high=0.01)
+        qpos = self.init_qpos #+ self.np_random.uniform(size=self.model.nq, low=-0.01, high=0.01)
+        qvel = self.init_qvel #+ self.np_random.uniform(size=self.model.nv, low=-0.01, high=0.01)
         self.set_state(qpos, qvel)
         return self._get_obs()
 
     def reset_up(self):
-        qpos = np.array([0, 0], dtype=np.float64) + self.np_random.uniform(size=self.model.nq, low=-0.01, high=0.01)
-        qvel = np.array([0, 0], dtype=np.float64) + self.np_random.uniform(size=self.model.nv, low=-0.01, high=0.01)
+        qpos = np.array([0, 0], dtype=np.float64) #+ self.np_random.uniform(size=self.model.nq, low=-0.01, high=0.01)
+        qvel = np.array([0, 0], dtype=np.float64) #+ self.np_random.uniform(size=self.model.nv, low=-0.01, high=0.01)
         self.set_state(qpos, qvel)
         return self._get_obs()
 
     def reset_down(self):
-        qpos = np.array([0, np.pi], dtype=np.float64) + self.np_random.uniform(size=self.model.nq, low=-0.01, high=0.01)
-        qvel = np.array([0, 0], dtype=np.float64) + self.np_random.uniform(size=self.model.nv, low=-0.01, high=0.01)
+        qpos = np.array([0, np.pi], dtype=np.float64) #+ self.np_random.uniform(size=self.model.nq, low=-0.01, high=0.01)
+        qvel = np.array([0, 0], dtype=np.float64) #+ self.np_random.uniform(size=self.model.nv, low=-0.01, high=0.01)
         self.set_state(qpos, qvel)
         return self._get_obs()
 

@@ -26,5 +26,5 @@ model = PPO(
     clip_range=0.2
 )
 
-model.learn(total_timesteps=9*10**6)
-model.save('models/qube_ppo_mujoco')
+model.learn(total_timesteps=5*10**6)
+model.save('models/qube_ppo_mujoco_2')

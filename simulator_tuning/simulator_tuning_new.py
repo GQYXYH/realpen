@@ -3,25 +3,25 @@ import functools
 import matplotlib.pyplot as plt
 
 import numpy as np
-from gym_brt.envs.reinforcementlearning_wrappers.rl_wrappers import FREQUENCY
 
 from gym_brt.quanser import QubeHardware, QubeSimulator
 from gym_brt.quanser.qube_interfaces import forward_model_ode
+#from simulator_tuning.qube_simulator_optimize import forward_model_ode_optimize
 
-from gym_brt.control.control import _convert_state, QubeFlipUpControl
+from gym_brt.control.control import _convert_state
 
+
+FREQUENCY = 100
 
 # No input
-from simulator_tuning.qube_simulator_optimize import forward_model_ode_optimize
-
-
 def zero_policy(state, **kwargs):
     return np.array([0.0])
 
 
 # Constant input
 def constant_policy(state, **kwargs):
-    return np.array([3.0])
+    value = 1.0
+    return np.array([value])
 
 
 # Rand input
@@ -133,6 +133,7 @@ def square_wave_flip_and_hold_policy(state, **kwargs):
 # Run on the hardware
 def run_qube(begin_up, policy, nsteps, frequency, integration_steps):
     with QubeHardware(frequency=frequency, max_voltage=3.0) as qube:
+
         if begin_up is True:
             s = qube.reset_up()
         elif begin_up is False:
@@ -144,13 +145,43 @@ def run_qube(begin_up, policy, nsteps, frequency, integration_steps):
             s = qube.step(a)
 
         init_state = s
-        a = policy(s)
+        a = policy(s, step=0)
         s_hist = [s]
         a_hist = [a]
 
         for i in range(nsteps):
             s = qube.step(a)
-            a = policy(s)
+            a = policy(s, step=i + 1, frequency=frequency)
+
+            s_hist.append(s)  # States
+            a_hist.append(a)  # Actions
+
+        # Return a 2d array, hist[n,d] gives the nth timestep and the dth dimension
+        # Dims are ordered as: ['Theta', 'Alpha', 'Theta dot', 'Alpha dot', 'Action']
+        return np.concatenate((np.array(s_hist), np.array(a_hist)), axis=1), init_state
+
+
+def run_mujoco(begin_up, policy, nsteps, frequency, integration_steps):
+    from gym_brt.envs.simulation.mujoco import QubeMujoco
+    with QubeMujoco(
+            frequency=frequency,
+            integration_steps=integration_steps,
+            max_voltage=3.0
+    ) as qube:
+
+        if begin_up is True:
+            s = qube.reset_up()
+        elif begin_up is False:
+            s = qube.reset_down()
+
+        init_state = s
+        a = policy(s, step=0)
+        s_hist = [s]
+        a_hist = [a]
+
+        for i in range(nsteps):
+            s = qube.step(a)
+            a = policy(s, step=i + 1, frequency=frequency)
 
             s_hist.append(s)  # States
             a_hist.append(a)  # Actions
@@ -219,38 +250,71 @@ def plot_results(hists, labels, colors=None, normalize=None):
 
 def run_real():
     # Natural response when starting at α = 0 + noise (upright/inverted)
-    hist_qube, init_state = run_qube(True, zero_policy, nsteps, frequency, i_steps)
+    hist_qube, init_state = run_qube(False, zero_policy, nsteps, frequency, i_steps)
 
     import pickle
-    outfile = open("../hist_qube", "wb")
+    outfile = open("../hist_qube_real", "wb")
     pickle.dump(hist_qube, outfile)
-    outfile = open("../init_state", "wb")
+    outfile = open("../init_state_real", "wb")
     pickle.dump(init_state, outfile)
 
 
-def run(params=None, visualize=False):
+def run_muj():
+    # Natural response when starting at α = 0 + noise (upright/inverted)
+    hist_qube, init_state = run_mujoco(True, POLICY, nsteps, frequency, i_steps)
+
+    import pickle
+    outfile = open("../hist_qube_muj", "wb")
+    pickle.dump(hist_qube, outfile)
+    outfile = open("../init_state_muj", "wb")
+    pickle.dump(init_state, outfile)
+
+
+def run_ode(params=None, init=None):
+    import pickle
+
+    if init is None:
+        infile = open("../init_state", "rb")
+        init_state = pickle.load(infile)
+    else:
+        init_state = np.copy(init)
+    hist_ode = run_sim(init_state, POLICY, nsteps, frequency, i_steps, params=params)
+
+    outfile = open("../hist_qube_ode", "wb")
+    pickle.dump(hist_ode, outfile)
+    outfile = open("../init_state_ode", "wb")
+    pickle.dump(init_state, outfile)
+
+
+def parameter_search():
+    pass
+    # TODO: Define parameters to be optimized via MSE (which library to use?)
+
+    def objective():
+        np.sqrt(np.mean((hist_qube[:, 0] - hist_ode[:, 0]) ** 2))
+
+
+def visualize(plot_real_qube=True, plot_ode=True, plot_mujoco=True):
     import pickle
     infile = open("../hist_qube", "rb")
     hist_qube = pickle.load(infile)
     infile = open("../init_state", "rb")
     init_state = pickle.load(infile)
-    hist_ode = run_sim(init_state, energy_control_policy, nsteps, frequency, i_steps, params=params)
-    print(params)
+    hist_ode = run_sim(init_state, POLICY, nsteps, frequency, i_steps, params=params)
 
-    if visualize:
-        # plot_results(hists=[hist_qube], labels=['Hardware'], colors=None)
-        plot_results(hists=[hist_qube, hist_ode], labels=['Hardware', 'ODE'], normalize=['alpha'])
-    return np.sqrt(np.mean((hist_qube[:,0] - hist_ode[:,0]) ** 2))
+    # plot_results(hists=[hist_qube], labels=['Hardware'], colors=None)
+    plot_results(hists=[hist_qube, hist_ode], labels=['Mujoco', 'ODE'], normalize=['alpha'])
+
 
 
 if __name__ == '__main__':
     # Constants between experiments
-    frequency = 100  # in Hz
+    frequency = FREQUENCY  # in Hz
     run_time = 10  # in seconds
     nsteps = int(run_time * frequency)
     i_steps = 1
     plt.rcParams["figure.figsize"] = (20, 20)  # make graphs BIG
-
+    POLICY = zero_policy
 
     # # optimize
     # from scipy.optimize import brute
@@ -272,4 +336,6 @@ if __name__ == '__main__':
 
     # # evaluate
     run_real()
-    run(visualize=True)
+    run_muj()
+    run_ode()
+    visualize()

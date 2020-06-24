@@ -52,13 +52,16 @@ class QubeBaseEnv(gym.Env):
                 self.qube = QubeSimulator(
                     forward_model="ode",
                     frequency=self._frequency,
-                    integration_steps=integration_steps,
+                    integration_steps=integration_steps, # TODO: integration_steps != frame_skipping
                     max_voltage=MAX_MOTOR_VOLTAGE,
                 )
                 self._own_rendering = True
             elif simulation_mode == 'mujoco':
                 from gym_brt.envs.simulation.mujoco import QubeMujoco
-                self.qube = QubeMujoco()  # TODO: Frequency
+                integration_steps = int(np.ceil(1000 / self._frequency))#int(np.ceil(1000 / self._frequency))
+                self.qube = QubeMujoco(frequency=self._frequency,
+                                       integration_steps=integration_steps,
+                                       max_voltage=MAX_MOTOR_VOLTAGE,)  # TODO: Frequency
                 self._own_rendering = False
             elif simulation_mode == 'bullet':
                 self._own_rendering = False
@@ -101,7 +104,7 @@ class QubeBaseEnv(gym.Env):
     def reset(self):
         self._episode_reward = 0
         self._episode_steps = 0
-        # Occasionaly reset the enocoders to remove sensor drift
+        # Occasionaly reset the encoders to remove sensor drift
         if self._steps_since_encoder_reset >= self._encoder_reset_steps:
             self.qube.reset_encoders()
             self._steps_since_encoder_reset = 0

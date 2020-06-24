@@ -40,16 +40,16 @@ class MujocoBase(object):
     """Superclass for all MuJoCo environments.
     """
 
-    def __init__(self, model_path, frame_skip):
+    def __init__(self, model_path, n_substeps=1):
         if model_path.startswith("/") or model_path.startswith("../"):
             fullpath = model_path
         else:
             fullpath = os.path.join(os.path.dirname(__file__), "assets", model_path)
         if not path.exists(fullpath):
             raise IOError("File %s does not exist" % fullpath)
-        self.frame_skip = frame_skip
+        self.nsubsteps = n_substeps
         self.model = mujoco_py.load_model_from_path(fullpath)
-        self.sim = mujoco_py.MjSim(self.model)
+        self.sim = mujoco_py.MjSim(self.model, nsubsteps=n_substeps)
         self.data = self.sim.data
         self.viewer = None
         self._viewers = {}
@@ -70,7 +70,7 @@ class MujocoBase(object):
         self.seed()
 
     def _set_action_space(self):
-        bounds = self.model.actuator_ctrlrange.copy().astype(np.float32)
+        bounds = self.model.actuator_ctrlrange.copy().astype(np.float32) # TODO: max_voltage is maximum action space
         low, high = bounds.T
         self.action_space = spaces.Box(low=low, high=high, dtype=np.float32)
         return self.action_space
@@ -118,15 +118,15 @@ class MujocoBase(object):
                                          old_state.act, old_state.udd_state)
         self.sim.set_state(new_state)
         self.sim.forward()
+        self.sim.step()
 
     @property
     def dt(self):
-        return self.model.opt.timestep * self.frame_skip
+        return self.sim.model.opt.timestep * self.sim.nsubsteps
 
-    def do_simulation(self, ctrl, n_frames):
+    def do_simulation(self, ctrl):
         self.sim.data.ctrl[:] = ctrl
-        for _ in range(n_frames):
-            self.sim.step()
+        self.sim.step()
 
     def render(self,
                mode='human',
