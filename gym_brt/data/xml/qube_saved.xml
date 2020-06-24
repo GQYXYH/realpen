@@ -31,16 +31,16 @@
 			<geom contype="0" mesh="qube0:base" name="qube0:base" type="mesh" material="bodyMat"/>
 
             <body name="motor" pos="0.051036 -0.052181818 0.106909091">
-				<joint axis="0 0 1" name="base_motor" range="-90 90" type="hinge" damping="4.95104048e-04"/>
+				<joint axis="0 0 1" name="base_motor" range="-90 90" type="hinge" damping="0.000275"/>
                 <geom contype="0" mesh="qube0:motor" name="qube0:motor" type="mesh" material="redMat"/>
 
                 <body name="arm" pos="0 -0.0665 0.02036363636">
 				    <geom mesh="qube0:arm" name="qube0:arm" type="mesh" material="silverMat" mass="0.095"/>
 
                     <body name="pole" pos="0 -0.019 0">
-				        <joint axis="0 1 0" name="arm_pole" range="-90 90" type="hinge" damping="3.21397834e-05"/>
-				        <geom mesh="qube0:pole" name="qube0:pole" type="mesh" material="redMat" mass="0.024"/>
-                        <!-- <inertial pos="0.0 0.0 2.293429" mass="0.024" diaginertia="0.009411 1.072831 1.072943" /> -->
+				        <joint axis="0 1 0" name="arm_pole" range="-90 90" type="hinge" damping="0.0000505"/>
+				        <geom mesh="qube0:pole" name="qube0:pole" type="mesh" material="redMat" mass="0.04"/>
+                        <!-- <inertial pos="0.0 0.0 2.293429" mass="0.04" diaginertia="0.009411 1.072831 1.072943" /> -->
                     </body>
                 </body>
 			</body>

@@ -1,4 +1,5 @@
 import functools
+import pickle
 
 import matplotlib.pyplot as plt
 
@@ -9,9 +10,6 @@ from gym_brt.quanser.qube_interfaces import forward_model_ode
 #from simulator_tuning.qube_simulator_optimize import forward_model_ode_optimize
 
 from gym_brt.control.control import _convert_state
-
-
-FREQUENCY = 100
 
 # No input
 def zero_policy(state, **kwargs):
@@ -30,7 +28,7 @@ def random_policy(state, **kwargs):
 
 
 # Square wave, switch every 85 ms
-def square_wave_policy(state, step, frequency=FREQUENCY, **kwargs):
+def square_wave_policy(state, step, frequency=250, **kwargs):
     # steps_until_85ms = int(85 * (frequency / 300))
     # state = _convert_state(state)
     # # Switch between positive and negative every 85 ms
@@ -161,7 +159,8 @@ def run_qube(begin_up, policy, nsteps, frequency, integration_steps):
         return np.concatenate((np.array(s_hist), np.array(a_hist)), axis=1), init_state
 
 
-def run_mujoco(begin_up, policy, nsteps, frequency, integration_steps):
+def run_mujoco(begin_up, policy, n_steps, frequency, integration_steps, params=None, init_state=None):
+
     from gym_brt.envs.simulation.mujoco import QubeMujoco
     with QubeMujoco(
             frequency=frequency,
@@ -169,17 +168,32 @@ def run_mujoco(begin_up, policy, nsteps, frequency, integration_steps):
             max_voltage=3.0
     ) as qube:
 
+        def set_init_from_ob(ob):
+            pos = ob[:2]
+            pos[-1] *= -1
+            vel = ob[2:]
+            vel[-1] *= -1
+
+            qube.set_state(pos, vel)
+            return qube._get_obs()
+
         if begin_up is True:
             s = qube.reset_up()
         elif begin_up is False:
             s = qube.reset_down()
+
+        if init_state is not None:
+            s = set_init_from_ob(init_state)
+
+        if params is not None:
+            qube.model.dof_damping[:] = params[:]
 
         init_state = s
         a = policy(s, step=0)
         s_hist = [s]
         a_hist = [a]
 
-        for i in range(nsteps):
+        for i in range(n_steps):
             s = qube.step(a)
             a = policy(s, step=i + 1, frequency=frequency)
 
@@ -191,7 +205,7 @@ def run_mujoco(begin_up, policy, nsteps, frequency, integration_steps):
         return np.concatenate((np.array(s_hist), np.array(a_hist)), axis=1), init_state
 
 
-def run_sim(init_state, policy, nsteps, frequency, integration_steps, params=None):
+def run_sim(begin_up, policy, nsteps, frequency, integration_steps, params=None, init_state=None):
     if params is not None:
         sim_function = functools.partial(forward_model_ode_optimize, params=params)
     else:
@@ -203,9 +217,15 @@ def run_sim(init_state, policy, nsteps, frequency, integration_steps, params=Non
             integration_steps=integration_steps,
             max_voltage=3.0,
     ) as qube:
-        qube.state = np.asarray(init_state, dtype=np.float64)  # Set the initial state of the simulator
+        if begin_up is True:
+            s = qube.reset_up()
+        elif begin_up is False:
+            s = qube.reset_down()
 
-        s = init_state
+        if init_state is not None:
+            qube.state = np.asarray(init_state, dtype=np.float64)  # Set the initial state of the simulator
+            s = init_state
+
         a = policy(s, step=0)
         s_hist = [s]
         a_hist = [a]
@@ -248,94 +268,133 @@ def plot_results(hists, labels, colors=None, normalize=None):
     plt.show()
 
 
+def save(hist_path, hist_data, init_state_path, init_state):
+    outfile = open(hist_path, "wb")
+    pickle.dump(hist_data, outfile)
+    outfile = open(init_state_path, "wb")
+    pickle.dump(init_state, outfile)
+
+
+def load(hist_path, init_state_path):
+    infile = open(hist_path, "rb")
+    hist = pickle.load(infile)
+    infile = open(init_state_path, "rb")
+    init_state = pickle.load(infile)
+    return hist, init_state
+
+
 def run_real():
     # Natural response when starting at α = 0 + noise (upright/inverted)
-    hist_qube, init_state = run_qube(False, zero_policy, nsteps, frequency, i_steps)
+    hist_qube, init_state = run_qube(BEGIN_UP, POLICY, N_STEPS, FREQUENCY, I_STEPS)
 
-    import pickle
-    outfile = open("../hist_qube_real", "wb")
-    pickle.dump(hist_qube, outfile)
-    outfile = open("../init_state_real", "wb")
-    pickle.dump(init_state, outfile)
+    save("../simulator_tuning/data/hist_qube_real", hist_qube, "../simulator_tuning/data/init_state_real", init_state)
+    return hist_qube, init_state
 
 
-def run_muj():
+def run_muj(params=None, init=None):
     # Natural response when starting at α = 0 + noise (upright/inverted)
-    hist_qube, init_state = run_mujoco(True, POLICY, nsteps, frequency, i_steps)
+    if init is not None:
+        init_state = np.copy(init)
+    else:
+        init_state = None
 
-    import pickle
-    outfile = open("../hist_qube_muj", "wb")
-    pickle.dump(hist_qube, outfile)
-    outfile = open("../init_state_muj", "wb")
-    pickle.dump(init_state, outfile)
+    hist_muj, init_state = run_mujoco(BEGIN_UP, POLICY, N_STEPS, FREQUENCY, I_STEPS, params=params, init_state=init_state)
+
+    save("../simulator_tuning/data/hist_qube_muj", hist_muj, "../simulator_tuning/data/init_state_muj", init_state)
+    return hist_muj, init_state
 
 
 def run_ode(params=None, init=None):
-    import pickle
 
-    if init is None:
-        infile = open("../init_state", "rb")
-        init_state = pickle.load(infile)
-    else:
+    if init is not None:
         init_state = np.copy(init)
-    hist_ode = run_sim(init_state, POLICY, nsteps, frequency, i_steps, params=params)
+    else:
+        init_state = None
 
-    outfile = open("../hist_qube_ode", "wb")
-    pickle.dump(hist_ode, outfile)
-    outfile = open("../init_state_ode", "wb")
-    pickle.dump(init_state, outfile)
+    hist_ode = run_sim(BEGIN_UP, POLICY, N_STEPS, FREQUENCY, I_STEPS, params=params, init_state=init_state)
 
-
-def parameter_search():
-    pass
-    # TODO: Define parameters to be optimized via MSE (which library to use?)
-
-    def objective():
-        np.sqrt(np.mean((hist_qube[:, 0] - hist_ode[:, 0]) ** 2))
+    save("../simulator_tuning/data/hist_qube_ode", hist_ode, "../simulator_tuning/data/init_state_ode", init_state)
+    return hist_ode, init_state
 
 
-def visualize(plot_real_qube=True, plot_ode=True, plot_mujoco=True):
-    import pickle
-    infile = open("../hist_qube", "rb")
-    hist_qube = pickle.load(infile)
-    infile = open("../init_state", "rb")
-    init_state = pickle.load(infile)
-    hist_ode = run_sim(init_state, POLICY, nsteps, frequency, i_steps, params=params)
+def parameter_search(sim_func):
+    import nevergrad as ng
 
-    # plot_results(hists=[hist_qube], labels=['Hardware'], colors=None)
-    plot_results(hists=[hist_qube, hist_ode], labels=['Mujoco', 'ODE'], normalize=['alpha'])
+    real, init_state = load("../simulator_tuning/data/hist_qube_real", "../simulator_tuning/data/init_state_real")
 
+    def objective(params):
+        pred, _ = sim_func(BEGIN_UP, POLICY, N_STEPS, FREQUENCY, I_STEPS, params=params, init_state=init_state)
+        res = np.sqrt(np.mean((pred[:, :-1] - real[:, :-1]) ** 2))
+        if res < 3.3:
+            print(res, params)
+        return res
+
+    parametrization = ng.p.Instrumentation(
+        # a log-distributed scalar between 0.001 and 1.
+        params=ng.p.Array(init=[4.95104048e-04, 3.21397834e-05], mutable_sigma=True).set_bounds(0.000001, 0.001, method="bouncing").set_mutation(sigma=0.00001)
+    )
+
+    optimizer = ng.optimizers.ES(parametrization=parametrization, budget=1000)
+    recommendation = optimizer.minimize(objective)
+
+    return recommendation
+
+
+def visualize(plot_real_qube=False, plot_mujoco=False, plot_ode=False):
+    assert plot_real_qube or plot_mujoco or plot_ode, "At least one mode (real/simulation) should be plotted"
+
+    hists = list()
+    labels = list()
+
+    if plot_real_qube:
+        hist_qube, _ = load("../simulator_tuning/data/hist_qube_real", "../simulator_tuning/data/init_state_real")
+        hists.append(hist_qube)
+        labels.append("Hardware")
+
+    if plot_mujoco:
+        hist_muj, _ = load("../simulator_tuning/data/hist_qube_muj", "../simulator_tuning/data/init_state_muj")
+        hists.append(hist_muj)
+        labels.append("Mujoco")
+
+    if plot_ode:
+        hist_ode, _ = load("../simulator_tuning/data/hist_qube_ode", "../simulator_tuning/data/init_state_muj")
+        hists.append(hist_ode)
+        labels.append("ODE")
+
+    plot_results(hists=hists, labels=labels, normalize=[])
 
 
 if __name__ == '__main__':
     # Constants between experiments
-    frequency = FREQUENCY  # in Hz
+    FREQUENCY = 100
     run_time = 10  # in seconds
-    nsteps = int(run_time * frequency)
-    i_steps = 1
+    N_STEPS = int(run_time * FREQUENCY)
+    I_STEPS = 1  # Iteration steps
     plt.rcParams["figure.figsize"] = (20, 20)  # make graphs BIG
     POLICY = zero_policy
+    BEGIN_UP = True
 
-    # # optimize
-    # from scipy.optimize import brute
-    # # rranges = (slice(0.10, 0.121, 0.01),
-    # #            slice(0.0845, 0.0856, 0.0005),
-    # #            slice(0.000275, 0.000276, 0.000005),
-    # #            slice(0.039, 0.0411, 0.001),
-    # #            slice(0.1288, 0.12921, 0.0002),
-    # #            slice(0.0000495, 0.0000506, 0.0000005))
-    # #
-    # # # input tuning
-    # rranges = (slice(8, 9.1, 0.2),
-    #            slice(0.035, 0.048, 0.001),
-    #            slice(0.035, 0.048, 0.001))
-    #
-    # x0, fval, grid, jout = brute(run, rranges, finish=None, disp=True, full_output=True)
-    # print(x0)
-    # print(fval)
+    PARAMETER_SEARCH = True
+    SIM_FUNC = run_mujoco
 
-    # # evaluate
-    run_real()
-    run_muj()
-    run_ode()
-    visualize()
+    if PARAMETER_SEARCH:
+        rec = parameter_search(SIM_FUNC)
+        print(f"Last recommendation: {rec}")
+    else:
+        # Choose which mode should be run
+        RUN_REAL = False
+        RUN_MUJ = True
+        RUN_ODE = False
+
+        assert RUN_ODE or RUN_REAL or RUN_MUJ, "At least one mode (real/simulation) must be executed"
+
+        # # evaluate
+        if RUN_REAL:
+            run_real()
+        _, init = load("../simulator_tuning/data/hist_qube_real", "../simulator_tuning/data/init_state_real")
+        print(f"Initialisation state for the simulations: \n {init}")
+        if RUN_MUJ:
+            run_muj(init=init)
+        if RUN_ODE:
+            run_ode(init=init)
+        visualize(plot_real_qube=True, plot_mujoco=True, plot_ode=False)
