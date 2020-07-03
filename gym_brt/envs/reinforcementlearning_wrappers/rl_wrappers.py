@@ -19,7 +19,7 @@ Wrapper always needs to be used like
 to ensure safe closure of camera and qube!
 """
 
-FREQUENCY = 250
+FREQUENCY = 120
 
 
 class QubeBeginDownEnv(QubeSwingupEnv):
