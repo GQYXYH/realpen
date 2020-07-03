@@ -27,7 +27,7 @@ model = PPO(
     clip_range=0.2
 )
 
-model = model.load('models/qube_ppo_mujoco.zip')
+model = model.load('models/qube_ppo_mujoco_2.zip')
 
 env = QubeBeginDownEnv(use_simulator=True, simulation_mode='mujoco', batch_size=MAX_EPISODE_LENGTH)
 for i in range(10):

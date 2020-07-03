@@ -1,6 +1,7 @@
 import mujoco_py
 import numpy as np
 from gym_brt.envs import QubeSwingupEnv, QubeBeginUpEnv, QubeBeginDownEnv
+from gym_brt.envs.simulation.mujoco import QubeMujoco
 
 xml_path = "../gym_brt/data/xml/qube.xml"
 model = mujoco_py.load_model_from_path(xml_path)
@@ -22,16 +23,31 @@ class ChangingAgent():
         self.counter += 1
         return self.direction * self._action_value
 
+# Square wave, switch every 85 ms
+def square_wave_policy(state, step, frequency=250, **kwargs):
+    # steps_until_85ms = int(85 * (frequency / 300))
+    # state = _convert_state(state)
+    # # Switch between positive and negative every 85 ms
+    # mod_170ms = step % (2 * steps_until_85ms)
+    # if mod_170ms < steps_until_85ms:
+    #     action = 3.0
+    # else:
+    #     action = -3.0
+    action = 3.0*np.sin(step/frequency/0.1)
 
-env = QubeBeginDownEnv(use_simulator=True, simulation_mode='mujoco')
+    return np.array([action])
+
+
+env = QubeSwingupEnv(use_simulator=True, simulation_mode='mujoco')
 obs = env.reset()
-agent = ChangingAgent()
+t = 0
 while True:
-    action = agent.step()
+    action = square_wave_policy(obs, t)
     obs, r, done, _ = env.step(action)
+    print(f"Step {t}: \t {obs}, \t \t Action: \t {action}")
     done = done.any() if isinstance(done, np.ndarray) else done
     env.render()
 
-    if done:
-        obs = env.reset()
-        #env.qube.randomise()
+    if t == 1000:
+        break
+    t += 1
