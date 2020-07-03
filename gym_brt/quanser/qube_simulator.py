@@ -9,7 +9,7 @@ import math
 
 # Motor
 Rm = 8.4  # Resistance
-kt = 0.033 #0.042  # Current-torque (N-m/A)
+kt = 0.046 #0.042  # Current-torque (N-m/A)
 km = 0.042 # 0.042  # Back-emf constant (V-s/rad)
 
 # Rotary Arm

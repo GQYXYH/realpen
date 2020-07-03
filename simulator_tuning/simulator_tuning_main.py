@@ -219,7 +219,7 @@ def plot_results(hists, labels, colors=None, normalize=None):
 
 def run_real():
     # Natural response when starting at α = 0 + noise (upright/inverted)
-    hist_qube, init_state = run_qube(True, zero_policy, nsteps, frequency, i_steps)
+    hist_qube, init_state = run_qube(True, flip_and_hold_policy, nsteps, frequency, i_steps)
 
     import pickle
     outfile = open("../hist_qube", "wb")
@@ -234,7 +234,7 @@ def run(params=None, visualize=False):
     hist_qube = pickle.load(infile)
     infile = open("../init_state", "rb")
     init_state = pickle.load(infile)
-    hist_ode = run_sim(init_state, energy_control_policy, nsteps, frequency, i_steps, params=params)
+    hist_ode = run_sim(init_state, flip_and_hold_policy, nsteps, frequency, i_steps, params=params)
     print(params)
 
     if visualize:
@@ -245,8 +245,13 @@ def run(params=None, visualize=False):
 
 if __name__ == '__main__':
     # Constants between experiments
-    frequency = 100  # in Hz
+    frequency = 250  # in Hz
     run_time = 10  # in seconds
+
+    # change policy in run and run_real, zero_policy and flip_and_hold_policy are good to validate simulation
+
+
+
     nsteps = int(run_time * frequency)
     i_steps = 1
     plt.rcParams["figure.figsize"] = (20, 20)  # make graphs BIG
