@@ -4,7 +4,7 @@ from setuptools.command.build_ext import build_ext as _build_ext
 
 # Environment-specific dependencies.
 extras = {
-    'mujoco': ['mujoco_py>=1.50', 'imageio'],
+    'mujoco': ['mujoco_py>=2.0', 'imageio'],
     #'bullet': ['pybullet>=1.7.8']
 }
 
@@ -56,9 +56,9 @@ if os.path.isdir("/opt/quanser/hil_sdk/lib"):
 
 setup(
     name="gym_brt",
-    version=0.1,
+    version=0.2,
     cmdclass={"build_ext": build_ext} if is_hil_sdk_installed else {},
-    install_requires=["numpy", "gym"],
+    install_requires=["numpy", "gym", "matplotlib"],
     setup_requires=["numpy"],
     extras_require=extras,
     ext_modules=extensions if is_hil_sdk_installed else None,
