@@ -58,7 +58,11 @@ setup(
     name="gym_brt",
     version=0.2,
     cmdclass={"build_ext": build_ext} if is_hil_sdk_installed else {},
-    install_requires=["numpy", "gym", "matplotlib"],
+    install_requires=[
+        "numpy",
+        "gym>=0.17",
+        "matplotlib"
+    ],
     setup_requires=["numpy"],
     extras_require=extras,
     ext_modules=extensions if is_hil_sdk_installed else None,
