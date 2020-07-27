@@ -209,6 +209,7 @@ class QubeFlipUpControl(Control):
             action = self._flip_up(theta, alpha, theta_dot, alpha_dot)
 
         voltages = np.array([action], dtype=np.float64)
+
         # set the saturation limit to +/- the Qube saturation voltage
         np.clip(voltages, -QUBE_MAX_VOLTAGE, QUBE_MAX_VOLTAGE, out=voltages)
         assert voltages.shape == self.action_shape
