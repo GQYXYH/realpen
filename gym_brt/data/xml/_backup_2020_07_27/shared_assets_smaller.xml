@@ -1,0 +1,10 @@
+
+<!-- See LICENSE.md for legal notices. LICENSE.md must be kept together with this file. -->
+<mujoco>
+    <texture type="skybox" builtin="gradient" rgb1="0.44 0.85 0.56" rgb2="0.46 0.87 0.58" width="32" height="32"/>
+
+    <mesh file="../meshes/qube_block.stl" name="qube0:base"/>
+    <mesh file="../meshes/qube_motor_with_cable.stl" name="qube0:motor"/>
+    <mesh file="../meshes/qube_arm_ml.stl" name="qube0:arm"/>
+    <mesh file="../meshes/qube_pole_ml.stl" name="qube0:pole"/>
+</mujoco>

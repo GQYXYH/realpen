@@ -13,7 +13,7 @@ def diff_forward_model_ode(state, t, action, dt, params=None):
     # Motor
     Rm = 8.4  # Resistance
     kt = 0.042  # Current-torque (N-m/A)
-    km = 0.042  # 0.042  # Back-emf constant (V-s/rad)
+    km = 0.033  # 0.033  # Back-emf constant (V-s/rad)
 
     # Rotary Arm
     mr = 0.10  # 0.095  # Mass (kg)
@@ -22,7 +22,7 @@ def diff_forward_model_ode(state, t, action, dt, params=None):
     Dr = 0.000275  # Equivalent viscous damping coefficient (N-m-s/rad)
 
     # Pendulum Link
-    mp = 0.04  # 0.024  # Mass (kg)
+    mp = 0.024  # mp = 0.04  # Mass (kg)
     Lp = 0.1288  # Total length (m)
     Jp = mp * Lp ** 2 / 12  # Moment of inertia about pivot (kg-m^2)
     Dp = 0.0000505  # Equivalent viscous damping coefficient (N-m-s/rad)
