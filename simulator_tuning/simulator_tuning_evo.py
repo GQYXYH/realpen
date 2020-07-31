@@ -18,7 +18,7 @@ def zero_policy(state, **kwargs):
 
 # Constant input
 def constant_policy(state, **kwargs):
-    value = 1.0
+    value = 4.0
     return np.array([value])
 
 
@@ -159,20 +159,23 @@ def run_qube(begin_up, policy, nsteps, frequency, integration_steps):
         return np.concatenate((np.array(s_hist), np.array(a_hist)), axis=1), init_state
 
 
-def run_mujoco(begin_up, policy, n_steps, frequency, integration_steps, params=None, init_state=None):
+def run_mujoco(begin_up, policy, n_steps, frequency, integration_steps, params=None, init_state=None, render=False):
 
     from gym_brt.envs.simulation.mujoco import QubeMujoco
     with QubeMujoco(
             frequency=frequency,
             integration_steps=integration_steps,
-            max_voltage=3.0
+            max_voltage=18.0
     ) as qube:
 
         def set_init_from_ob(ob):
             pos = ob[:2]
-            pos[-1] *= -1
+            pos[1] *= -1
             vel = ob[2:]
-            vel[-1] *= -1
+            vel[1] *= -1
+
+            print(pos)
+            print(vel)
 
             qube.set_state(pos, vel)
             return qube._get_obs()
@@ -185,8 +188,12 @@ def run_mujoco(begin_up, policy, n_steps, frequency, integration_steps, params=N
         if init_state is not None:
             s = set_init_from_ob(init_state)
 
-        if params is not None:
-            qube.model.dof_damping[:] = params[:]
+        if render:
+            qube.render()
+
+        #if params is not None:
+            #qube.model.dof_damping[:] = params[:]
+            #qube.actuation_consts[:] = params[:]
 
         init_state = s
         a = policy(s, step=0)
@@ -194,18 +201,32 @@ def run_mujoco(begin_up, policy, n_steps, frequency, integration_steps, params=N
         a_hist = [a]
 
         for i in range(n_steps):
+            if render:
+                qube.render()
             s = qube.step(a)
             a = policy(s, step=i + 1, frequency=frequency)
 
             s_hist.append(s)  # States
             a_hist.append(a)  # Actions
+            #print("--------------------------------------------------")
+            #print(qube.sim.mjENABLESTRING)
+            #print(qube.sim.data.qacc)
+            #print(qube.sim.data.qfrc_actuator)
+            #print(qube.sim.data.qfrc_applied)
+            #print(qube.sim.data.qfrc_bias)
+            #print(qube.sim.data.qfrc_constraint)
+            #print(qube.sim.data.qfrc_passive)
+            #print(qube.sim.data.qfrc_unc)
+
+
+        #print(qube.model.get_xml())
 
         # Return a 2d array, hist[n,d] gives the nth timestep and the dth dimension
         # Dims are ordered as: ['Theta', 'Alpha', 'Theta dot', 'Alpha dot', 'Action']
         return np.concatenate((np.array(s_hist), np.array(a_hist)), axis=1), init_state
 
 
-def run_sim(begin_up, policy, nsteps, frequency, integration_steps, params=None, init_state=None):
+def run_sim(begin_up, policy, nsteps, frequency, integration_steps, params=None, init_state=None, render=False):
     if params is not None:
         sim_function = functools.partial(forward_model_ode_optimize, params=params)
     else:
@@ -215,7 +236,7 @@ def run_sim(begin_up, policy, nsteps, frequency, integration_steps, params=None,
             forward_model=sim_function,
             frequency=frequency,
             integration_steps=integration_steps,
-            max_voltage=3.0,
+            max_voltage=18.0,
     ) as qube:
         if begin_up is True:
             s = qube.reset_up()
@@ -226,11 +247,18 @@ def run_sim(begin_up, policy, nsteps, frequency, integration_steps, params=None,
             qube.state = np.asarray(init_state, dtype=np.float64)  # Set the initial state of the simulator
             s = init_state
 
+        if render:
+            from gym_brt.envs.rendering import QubeRenderer
+            viewer = QubeRenderer(s[0], s[1], frequency)
+            viewer.render(s[0], s[1])
+
         a = policy(s, step=0)
         s_hist = [s]
         a_hist = [a]
 
         for i in range(nsteps):
+            if render and viewer is not None:
+                viewer.render(s[0], s[1])
             s = qube.step(a)
             a = policy(s, step=i + 1, frequency=frequency)
 
@@ -291,27 +319,27 @@ def run_real():
     return hist_qube, init_state
 
 
-def run_muj(params=None, init=None):
+def run_muj(params=None, init=None, render=False):
     # Natural response when starting at α = 0 + noise (upright/inverted)
     if init is not None:
         init_state = np.copy(init)
     else:
         init_state = None
 
-    hist_muj, init_state = run_mujoco(BEGIN_UP, POLICY, N_STEPS, FREQUENCY, I_STEPS, params=params, init_state=init_state)
+    hist_muj, init_state = run_mujoco(BEGIN_UP, POLICY, N_STEPS, FREQUENCY, I_STEPS, params=params, init_state=init_state, render=render)
 
     save("../simulator_tuning/data/hist_qube_muj", hist_muj, "../simulator_tuning/data/init_state_muj", init_state)
     return hist_muj, init_state
 
 
-def run_ode(params=None, init=None):
+def run_ode(params=None, init=None, render=False):
 
     if init is not None:
         init_state = np.copy(init)
     else:
         init_state = None
 
-    hist_ode = run_sim(BEGIN_UP, POLICY, N_STEPS, FREQUENCY, I_STEPS, params=params, init_state=init_state)
+    hist_ode = run_sim(BEGIN_UP, POLICY, N_STEPS, FREQUENCY, I_STEPS, params=params, init_state=init_state, render=render)
 
     save("../simulator_tuning/data/hist_qube_ode", hist_ode, "../simulator_tuning/data/init_state_ode", init_state)
     return hist_ode, init_state
@@ -325,23 +353,28 @@ def parameter_search(sim_func):
     def objective(params):
         pred, _ = sim_func(BEGIN_UP, POLICY, N_STEPS, FREQUENCY, I_STEPS, params=params, init_state=init_state)
         res = np.sqrt(np.mean((pred[:, :-1] - real[:, :-1]) ** 2))
-        if res < 3.3:
-            print(res, params)
+        #if res < 3.3:
+        print(res, params)
         return res
 
+    #parametrization = ng.p.Instrumentation(
+    #    params=ng.p.Array(init=[4.95104048e-04, 3.21397834e-05], mutable_sigma=True).set_bounds(0.0000001, 0.0005, method="bouncing")#.set_mutation(sigma=0.01)
+    #)
+
+    lower = np.array([5, 0.01, 0.01])
+    upper = np.array([10, 1.0, 1.0])
     parametrization = ng.p.Instrumentation(
-        # a log-distributed scalar between 0.001 and 1.
-        params=ng.p.Array(init=[4.95104048e-04, 3.21397834e-05], mutable_sigma=True).set_bounds(0.000001, 0.001, method="bouncing").set_mutation(sigma=0.00001)
+        params=ng.p.Array(init=[8.4, 0.042, 0.042], mutable_sigma=True).set_bounds(lower, upper, method="bouncing").set_mutation(sigma=0.01)
     )
 
-    optimizer = ng.optimizers.ES(parametrization=parametrization, budget=1000)
+    optimizer = ng.optimizers.TwoPointsDE(parametrization=parametrization, budget=300)
     recommendation = optimizer.minimize(objective)
 
     return recommendation
 
 
 def visualize(plot_real_qube=False, plot_mujoco=False, plot_ode=False):
-    assert plot_real_qube or plot_mujoco or plot_ode, "At least one mode (real/simulation) should be plotted"
+    assert plot_real_qube or plot_mujoco or plot_ode, "At least one mode (hardware or simulation) must be plotted"
 
     hists = list()
     labels = list()
@@ -361,7 +394,11 @@ def visualize(plot_real_qube=False, plot_mujoco=False, plot_ode=False):
         hists.append(hist_ode)
         labels.append("ODE")
 
-    plot_results(hists=hists, labels=labels, normalize=[])
+    #if plot_mujoco and plot_real_qube:
+        #res = np.sqrt(np.mean((hist_qube[:, :-1] - hist_muj[:, :-1]) ** 2))
+        #print(res)
+
+    plot_results(hists=hists, labels=labels, normalize=['alpha'])
 
 
 if __name__ == '__main__':
@@ -374,7 +411,7 @@ if __name__ == '__main__':
     POLICY = zero_policy
     BEGIN_UP = True
 
-    PARAMETER_SEARCH = True
+    PARAMETER_SEARCH = False
     SIM_FUNC = run_mujoco
 
     if PARAMETER_SEARCH:
@@ -384,7 +421,15 @@ if __name__ == '__main__':
         # Choose which mode should be run
         RUN_REAL = False
         RUN_MUJ = True
-        RUN_ODE = False
+        RUN_ODE = True
+
+        RENDER_MUJ = True
+        RENDER_ODE = False
+
+        if RENDER_ODE:
+            assert RUN_ODE, "ODE simulation cannot be rendered if it will not be executed"
+        if RENDER_MUJ:
+            assert RUN_MUJ, "Mujoco simulation cannot be rendered if it will not be executed"
 
         assert RUN_ODE or RUN_REAL or RUN_MUJ, "At least one mode (real/simulation) must be executed"
 
@@ -392,9 +437,11 @@ if __name__ == '__main__':
         if RUN_REAL:
             run_real()
         _, init = load("../simulator_tuning/data/hist_qube_real", "../simulator_tuning/data/init_state_real")
+        #_, init = load("../simulator_tuning/data/hist_qube_real_swingup", "../simulator_tuning/data/init_state_real_swingup")
+        #init = np.array([0, 0, 0, 0]) + np.random.uniform(size=4, low=-0.01, high=0.01)
         print(f"Initialisation state for the simulations: \n {init}")
         if RUN_MUJ:
-            run_muj(init=init)
+            run_muj(init=init, render=RENDER_MUJ)
         if RUN_ODE:
-            run_ode(init=init)
-        visualize(plot_real_qube=True, plot_mujoco=True, plot_ode=False)
+            run_ode(init=init, render=RENDER_ODE)
+        visualize(plot_real_qube=True, plot_mujoco=RUN_MUJ, plot_ode=RUN_ODE)

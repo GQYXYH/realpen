@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mujoco model="qube">
+    <compiler angle="radian" coordinate="local" meshdir="../meshes/" inertiafromgeom="auto"/>
+    <option gravity="0 0 -9.81" integrator="Euler">
+        <flag passive="disable"/>
+    </option>
+
+    <asset>
+        <include file="shared_assets.xml"/>
+        <texture builtin="flat" name="texbody" height="1024" width="1024" rgb1="0 0 0" type="2d"/>
+        <texture builtin="flat" name="texfloor" height="1024" width="1024" rgb1="1 1 1" type="2d"/>
+        <texture builtin="flat" name="texred" height="1024" width="1024" rgb1="0.698 0.1333 0.1333" type="2d"/>
+        <texture builtin="flat" name="texsilver" height="512" width="512" rgb1="0.7529 0.7529 0.7529" type="2d"/>
+		<material name="bodyMat" shininess="0.1" specular="0.75" texture="texbody"/>
+        <material name="floorMat" shininess="0.3" specular="0.75" texture="texfloor"/>
+        <material name="redMat" shininess="0.9" specular="1.0" texture="texred"/>
+        <material name="silverMat" shininess="0.3" specular="0.75" texture="texsilver"/>
+    </asset>
+
+    <visual>
+        <global fovy="45" />
+    </visual>
+
+    <worldbody>
+        <light diffuse=".8 .8 .8" dir="0 0 -1" directional="false" pos="0.051036 -0.032181818 0.5" specular="0.9 0.9 0.9" castshadow="true"/>
+
+        <camera pos="-5 -5 15" name="view" euler="-30 0 -45"/>
+
+        <geom conaffinity="0" contype="0" name="ground" pos="0 0 0" size="5 5 1" type="plane" material="floorMat"/>
+
+        <body name="body" pos="0.0 0.0 0.0">
+			<geom contype="0" conaffinity="0" condim="1" mesh="qube0:base" name="qube0:base" type="mesh" material="bodyMat" mass="1.1" friction="0 0 0"/>
+
+            <body name="motor" pos="0.0 0.0 0.12672">
+                <joint axis="0 0 1" name="base_motor" range="-0.7853981634 0.7853981634" type="hinge" damping="0.0015"/>
+                <geom contype="0" conaffinity="0" condim="1" mesh="qube0:motor" name="qube0:motor" type="mesh" material="redMat"  friction="0 0 0"/>
+
+                <body name="arm" pos="0.0 -0.054882 0.0">
+                    <joint axis="0 1 0" name="arm_pole" type="hinge" damping="0.0005"/>
+
+				    <geom contype="0" conaffinity="0" condim="1" mesh="qube0:arm" name="qube0:arm" type="mesh" material="silverMat" mass="0.095" friction="0 0 0"/>
+
+                    <body name="pole" pos="0.0 -0.030562 0.0">
+                        <geom mesh="qube0:pole" name="qube0:pole" type="mesh" material="redMat" mass="0.024" friction="0 0 0" />
+                    </body>
+                </body>
+			</body>
+		</body>
+    </worldbody>
+
+    <actuator>
+        <!-- <velocity joint="base_motor" name="motor_rotation" ctrllimited="true" ctrlrange="-18 18" gear="1" kv="0.005"/> -->
+        <general name="motor_rotation" joint="base_motor" ctrllimited="true" ctrlrange="-18 18" biastype="affine" gainprm="0.005 0 0 0 0 0 0 0 0 0" biasprm="0 0 -1.771542e-06 0 0 0 0 0 0 0" />
+    </actuator>
+</mujoco>

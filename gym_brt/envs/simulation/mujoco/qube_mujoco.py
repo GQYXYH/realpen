@@ -14,29 +14,25 @@ class QubeMujoco(QubeSimulatorBase, MujocoBase):
     def reset(self):
         MujocoBase.reset(self)
 
-    def __init__(self,
-                 frequency: float = 250,
-                 integration_steps: int = 1,
-                 max_voltage: float = 18.0
+    def __init__(
+            self,
+            frequency: float = 250,
+            integration_steps: int = 1,
+            max_voltage: float = 18.0
         ):
-
         self._dt = 1.0 / frequency # TODO: See MujocoBase dt property
         self._integration_steps = integration_steps
         self._max_voltage = max_voltage
 
+        self.Rm = 8.4  # Resistance
+        self.kt = 0.042  # Current-torque (N-m/A)
+        self.km = 0.042  # 0.042  # Back-emf constant (V-s/rad)
+
         MujocoBase.__init__(self, XML_PATH, integration_steps)
         self.model.opt.timestep = self._dt
-        #self.frame_skip = int1 / frequency * self.model.opt.timestep)
+        #self.frame_skip = int(1 / frequency * self.model.opt.timestep)
 
         self.state = self._get_obs()
-        self._modders = dict()
-
-    def randomise(self):
-        if not self._modders:
-            tex_modder = TextureModder(self.sim)
-            self._modders["TexMod"] = tex_modder
-        for name in self.sim.model.geom_names:
-            self._modders["TexMod"].rand_all(name)
 
     def _get_obs(self):
         """
@@ -47,24 +43,23 @@ class QubeMujoco(QubeSimulatorBase, MujocoBase):
         theta_before, alpha_before = self.sim.data.qpos
         theta_dot, alpha_dot = self.sim.data.qvel
 
-        theta = self.angle_normalize(theta_before)
-        alpha = -self.angle_normalize(alpha_before)
+        theta = self.angle_normalize(theta_before + np.pi)
+        alpha = self.angle_normalize(alpha_before + np.pi)
 
-        return np.array([theta, alpha, theta_dot, -alpha_dot])
+        #alpha_dot *= -1
+
+        return -np.array([theta, alpha, theta_dot, alpha_dot])
 
     def angle_normalize(self, x: float) -> float:
-        return ((x + np.pi) % (2 * np.pi)) - np.pi
+        return (x % (2 * np.pi)) - np.pi
 
     def gen_torque(self, action) -> float:
         # Motor
-        Rm = 8.4  # Resistance
-        kt = 0.033  # 0.042  # Current-torque (N-m/A)
-        km = 0.042  # 0.042  # Back-emf constant (V-s/rad)
+        # Rotor inertia 4e-06
 
-        theta_dot, _ = self.sim.data.qvel
+        _, _, theta_dot, _ = self._get_obs()
 
-        Vm = action
-        tau = -(kt * (Vm - km * theta_dot)) / Rm  # torque
+        tau = -(self.kt * (action - self.km * theta_dot)) / self.Rm  # torque
         return tau
 
     def viewer_setup(self):
@@ -80,7 +75,7 @@ class QubeMujoco(QubeSimulatorBase, MujocoBase):
 
     def step(self, action: float, led=None) -> np.array:
         action = np.clip(action, -self._max_voltage, self._max_voltage)
-        action = self.gen_torque(action)
+        action = -self.gen_torque(action)
         self.do_simulation(action)
         self.state = self._get_obs()
         return self.state

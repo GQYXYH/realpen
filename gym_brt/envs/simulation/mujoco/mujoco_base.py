@@ -117,8 +117,9 @@ class MujocoBase(object):
         new_state = mujoco_py.MjSimState(old_state.time, qpos, qvel,
                                          old_state.act, old_state.udd_state)
         self.sim.set_state(new_state)
-        self.sim.forward()
-        self.sim.step()
+        #self.sim.forward() # TODO: Why was this line needed?
+        #self.sim.step() # TODO: Why was this line needed?
+
 
     @property
     def dt(self):

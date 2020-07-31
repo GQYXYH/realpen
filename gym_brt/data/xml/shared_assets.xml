@@ -3,8 +3,18 @@
 <mujoco>
     <texture type="skybox" builtin="gradient" rgb1="0.44 0.85 0.56" rgb2="0.46 0.87 0.58" width="32" height="32"/>
 
-    <mesh file="../meshes/qube_base_scaled.stl" name="qube0:base" />
-    <mesh file="../meshes/qube_motor_scaled.stl" name="qube0:motor"/>
-    <mesh file="../meshes/qube_arm_scaled.stl" name="qube0:arm"/>
-    <mesh file="../meshes/qube_pole_scaled.stl" name="qube0:pole"/>
+    <mesh name="qube0:base" file="../meshes/qube_block.stl" />
+    <mesh name="qube0:base:aux:female" file="../meshes/qube_block_aux_female.stl" />
+    <mesh name="qube0:base:screw:01" file="../meshes/qube_block_screw_01.stl" />
+    <mesh name="qube0:base:screw:02" file="../meshes/qube_block_screw_02.stl" />
+    <mesh name="qube0:base:screw:03" file="../meshes/qube_block_screw_03.stl" />
+    <mesh name="qube0:base:screw:04" file="../meshes/qube_block_screw_04.stl" />
+    <mesh name="qube0:cable" file="../meshes/qube_cable.stl" />
+    <mesh name="qube0:cable:aux:male" file="../meshes/qube_cable_aux_male.stl" />
+    <mesh name="qube0:motor:main" file="../meshes/qube_motor_main.stl" />
+    <mesh name="qube0:motor:drive" file="../meshes/qube_motor_drive.stl" />
+    <mesh name="qube0:motor:front" file="../meshes/qube_motor_front.stl" />
+    <mesh name="qube0:motor:part" file="../meshes/qube_motor_part.stl" />
+    <mesh name="qube0:arm" file="../meshes/qube_arm.stl" />
+    <mesh name="qube0:pole" file="../meshes/qube_pole.stl" />
 </mujoco>
