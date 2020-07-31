@@ -25,7 +25,7 @@ class VisionQubeBeginDownEnv(QubeSwingupEnv):
                  encoder_reset_steps=int(1e8), ):
         super().__init__(frequency, batch_size, use_simulator, simulation_mode, encoder_reset_steps, )
         self.observation_space = spaces.Box(low=0, high=255,
-                                            shape=IMAGE_SHAPE, dtype=np.float64)
+                                            shape=IMAGE_SHAPE, dtype=np.float32)
 
         if use_simulator:
             if simulation_mode == 'mujoco':
@@ -58,5 +58,10 @@ class VisionQubeBeginDownEnv(QubeSwingupEnv):
         return super().__enter__()
 
     def __exit__(self, type, value, traceback):
-        self.camera.end_acquisition()
+        try:
+            self.camera.end_acquisition()
+        except:
+            print('could not end camera')
+            pass
+        self.camera.__exit__(type, value, traceback)
         super().__exit__(type, value, traceback)
