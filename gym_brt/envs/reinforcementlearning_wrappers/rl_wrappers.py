@@ -23,10 +23,6 @@ FREQUENCY = 120
 
 
 class QubeBeginDownEnv(QubeSwingupEnv):
-    #def __init__(self, frequency=FREQUENCY, batch_size=2048, use_simulator=False, simuilator encoder_reset_steps=int(1e8)):
-    #     super().__init__(frequency, batch_size, use_simulator, encoder_reset_steps)
-    #     self.observation_space = spaces.Box(-OBS_MAX, OBS_MAX, dtype=np.float32)
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.observation_space = spaces.Box(-OBS_MAX, OBS_MAX, dtype=np.float32)
