@@ -140,7 +140,7 @@ class QubeBaseEnv(gym.Env):
         raise NotImplementedError
 
     def _led(self):
-        led = [1.0, 0.0, 0.0]
+        led = [0.0, 0.0, 0.0]
         # if self._isdone():  # Doing reset
         #     led = [1.0, 1.0, 0.0]  # Yellow
         # else:
