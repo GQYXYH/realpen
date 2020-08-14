@@ -36,6 +36,7 @@ class VisionQubeBeginDownEnv(QubeSwingupEnv):
                                  f"Valid ones are 'mujoco'")
         else:
             self.camera = Blackfly(exposure_time=1000)
+            # self.camera.start_acquisition()
             self.preprocessor = ImagePreprocessor(False, IMAGE_SHAPE)
 
         self.use_simulator = use_simulator
@@ -58,6 +59,7 @@ class VisionQubeBeginDownEnv(QubeSwingupEnv):
                 return self.preprocessor.preprocess_and_normalize_image(image)
 
     def __enter__(self):
+        print('start camera')
         self.camera.start_acquisition()
         return super().__enter__()
 
