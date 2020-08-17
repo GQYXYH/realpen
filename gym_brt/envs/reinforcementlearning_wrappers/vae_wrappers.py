@@ -1,3 +1,5 @@
+import time
+
 from gym import spaces
 import numpy as np
 
@@ -10,6 +12,7 @@ from visiontovision.vae_predictor import VAEPredictor, VAEPredictorSmall
 OpenAI Gym wrapper with feature vector of specified VAE model (data_id, model_name) as state
 """
 
+real_state = True
 
 class VAEQubeBeginDownEnv(VisionQubeBeginDownEnv):
     def __init__(self, data_id, model_name, frequency=FREQUENCY, batch_size=2048, use_simulator=False,
@@ -22,8 +25,9 @@ class VAEQubeBeginDownEnv(VisionQubeBeginDownEnv):
         # TODO prune network and just predict feature vector
         self.predictor = VAEPredictorSmall(data_id, model_name)
 
-        self.goal_z = None
-        self.goal_z = self.get_goal_state()
+        if not real_state:
+            self.goal_z = None
+            self.goal_z = self.get_goal_state()
 
     def _get_state(self):
         image = super()._get_state()
@@ -32,13 +36,17 @@ class VAEQubeBeginDownEnv(VisionQubeBeginDownEnv):
         return z
 
     def _reward(self):
+        if real_state:
+            return super()._reward()
         if self.goal_z is None:
             self.goal_z = -1
             print('no reward returned')
+            return 0.
         elif self.goal_z is -1:
-            return 0
+            return 0.
         else:
-            return (np.square(self.z - self.goal_z)).mean()
+            # 64 is max difference (range: -1,1 times 32)
+            return 64-(np.square(self.z - self.goal_z)).mean()
 
     def get_goal_state(self):
         num_steps = self._frequency*5
@@ -50,7 +58,7 @@ class VAEQubeBeginDownEnv(VisionQubeBeginDownEnv):
         env.reset()
         state, reward, done, info = env.step(np.array([0], dtype=np.float64))
         encoder_state = [info['theta'], info['alpha'], info['theta_dot'], info['alpha_dot']]
-        for step in range(num_steps):
+        while ctrl_sys.step < ctrl_sys.sample_freq * (ctrl_sys.t_start + 5):
             # apply signal
             action = ctrl_sys.action(encoder_state)
             # get feedback
@@ -66,5 +74,7 @@ class VAEQubeBeginDownEnv(VisionQubeBeginDownEnv):
 
         featurelist = np.array(featurelist)
         mean = featurelist.mean(axis=0)
+        print('Goal state prediction done')
+        print(mean)
         # TODO dispaly image with goal state and wait for q
         return mean
