@@ -60,4 +60,6 @@ class VAEQubeBeginDownEnv(VisionQubeBeginDownEnv):
         featurelist = np.array(featurelist)
         print(featurelist.shape)
         mean = featurelist.mean(axis=0)
+        print(mean)
+        # TODO dispaly image with goal state and wait for q
         return mean
