@@ -22,6 +22,7 @@ class VAEQubeBeginDownEnv(VisionQubeBeginDownEnv):
         # TODO prune network and just predict feature vector
         self.predictor = VAEPredictorSmall(data_id, model_name)
 
+        self.goal_z = None
         self.goal_z = self.get_goal_state()
 
     def _get_state(self):
@@ -31,7 +32,13 @@ class VAEQubeBeginDownEnv(VisionQubeBeginDownEnv):
         return z
 
     def _reward(self):
-        return (np.square(self.z - self.goal_z)).mean()
+        if self.goal_z is None:
+            self.goal_z = -1
+            print('no reward returned')
+        elif self.goal_z is -1:
+            return 0
+        else:
+            return (np.square(self.z - self.goal_z)).mean()
 
     def get_goal_state(self):
         num_steps = self._frequency*5
@@ -58,8 +65,6 @@ class VAEQubeBeginDownEnv(VisionQubeBeginDownEnv):
                 featurelist.append(state)
 
         featurelist = np.array(featurelist)
-        print(featurelist.shape)
         mean = featurelist.mean(axis=0)
-        print(mean)
         # TODO dispaly image with goal state and wait for q
         return mean
