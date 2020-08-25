@@ -14,7 +14,7 @@ Reward can be defined under gym_brt/envs/reinforcementlearning_wrappers/rl_rewar
 
 
 def interact_with_down_environment():
-    frequency = 250
+    frequency = 120
 
     with QubeSwingupEnv(use_simulator=False, frequency=frequency) as env:
         controller = QubeFlipUpControl(sample_freq=frequency, env=env)
