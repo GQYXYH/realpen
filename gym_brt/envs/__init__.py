@@ -25,11 +25,19 @@ from gym.envs.registration import register
 register(
     id='QubeBeginDownEnv-v1',
     entry_point='gym_brt.envs:QubeBeginDownEnv',
-    max_episode_steps=1000,
     )
 
 register(
     id='QubeBeginUpEnv-v1',
     entry_point='gym_brt.envs:QubeBeginUpEnv',
-    max_episode_steps=1000,
+    )
+
+register(
+    id='QubeNoisyEnv-v1',
+    entry_point='gym_brt.envs:NoisyEnv',
+    )
+
+register(
+    id='QubeRandomStartEnv-v1',
+    entry_point='gym_brt.envs:RandomStartEnv',
     )
