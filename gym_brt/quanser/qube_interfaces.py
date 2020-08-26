@@ -98,13 +98,15 @@ class QubeHardware(object):
         action = np.array([0], dtype=np.float64)
         time_hold = 0.5 * self._frequency  # 0.5 seconds
         samples_downwards = 0  # Consecutive samples pendulum is stationary
-
+        no_move = 0
+        alpha = -100
         state = self.step([1.0])
         while True:
             action = dampen_policy(state)
             state = self.step(action)
 
             # Break if pendulum is stationary
+            prev_alpha = alpha
             alpha = state[1]
             if abs(alpha) > (178 * np.pi / 180):
                 if samples_downwards > time_hold:
@@ -112,6 +114,13 @@ class QubeHardware(object):
                 samples_downwards += 1
             else:
                 samples_downwards = 0
+                if abs(alpha - prev_alpha)/np.pi*180 < 2 or abs(alpha - prev_alpha)/np.pi*180 > 358:
+                    no_move += 1
+                if no_move > 5*self._frequency:
+                    print('reset encoders')
+                    self.qube.reset_encoders()
+                    state = self.step([0.0])
+                    break
         return state
 
     def reset_encoders(self):
@@ -120,7 +129,7 @@ class QubeHardware(object):
 
         self.step(np.array([0], dtype=np.float64))
         print("Doing a hard reset and, reseting the alpha encoder")
-        time.sleep(25)  # Do nothing for 3 seconds to ensure pendulum is stopped
+        time.sleep(3)  # Do nothing for 3 seconds to ensure pendulum is stopped
 
         # This is needed to prevent sensor drift on the alpha/pendulum angle
         # We ONLY reset the alpha channel because the dampen function stops the
