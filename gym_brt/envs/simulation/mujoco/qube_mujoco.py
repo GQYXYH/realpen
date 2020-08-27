@@ -5,7 +5,8 @@ from mujoco_py.modder import TextureModder
 
 import numpy as np
 
-XML_PATH = "../gym_brt/data/xml/qube.xml"
+#XML_PATH = "../gym_brt/data/xml/qube.xml"
+XML_PATH = "qube.xml"
 
 
 class QubeMujoco(QubeSimulatorBase, MujocoBase):

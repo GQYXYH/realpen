@@ -2,14 +2,15 @@ import functools
 import pickle
 
 import matplotlib.pyplot as plt
-
 import numpy as np
 
+from gym_brt.control.control import _convert_state
 from gym_brt.quanser import QubeHardware, QubeSimulator
 from gym_brt.quanser.qube_interfaces import forward_model_ode
-#from simulator_tuning.qube_simulator_optimize import forward_model_ode_optimize
 
-from gym_brt.control.control import _convert_state
+
+# from simulator_tuning.qube_simulator_optimize import forward_model_ode_optimize
+
 
 # No input
 def zero_policy(state, **kwargs):
@@ -37,7 +38,7 @@ def square_wave_policy(state, step, frequency=250, **kwargs):
     #     action = 3.0
     # else:
     #     action = -3.0
-    action = 3.0*np.sin(step/frequency/0.1)
+    action = 3.0 * np.sin(step / frequency / 0.1)
 
     return np.array([action])
 
@@ -160,7 +161,6 @@ def run_qube(begin_up, policy, nsteps, frequency, integration_steps):
 
 
 def run_mujoco(begin_up, policy, n_steps, frequency, integration_steps, params=None, init_state=None, render=False):
-
     from gym_brt.envs.simulation.mujoco import QubeMujoco
     with QubeMujoco(
             frequency=frequency,
@@ -191,9 +191,9 @@ def run_mujoco(begin_up, policy, n_steps, frequency, integration_steps, params=N
         if render:
             qube.render()
 
-        #if params is not None:
-            #qube.model.dof_damping[:] = params[:]
-            #qube.actuation_consts[:] = params[:]
+        # if params is not None:
+        # qube.model.dof_damping[:] = params[:]
+        # qube.actuation_consts[:] = params[:]
 
         init_state = s
         a = policy(s, step=0)
@@ -208,18 +208,6 @@ def run_mujoco(begin_up, policy, n_steps, frequency, integration_steps, params=N
 
             s_hist.append(s)  # States
             a_hist.append(a)  # Actions
-            #print("--------------------------------------------------")
-            #print(qube.sim.mjENABLESTRING)
-            #print(qube.sim.data.qacc)
-            #print(qube.sim.data.qfrc_actuator)
-            #print(qube.sim.data.qfrc_applied)
-            #print(qube.sim.data.qfrc_bias)
-            #print(qube.sim.data.qfrc_constraint)
-            #print(qube.sim.data.qfrc_passive)
-            #print(qube.sim.data.qfrc_unc)
-
-
-        #print(qube.model.get_xml())
 
         # Return a 2d array, hist[n,d] gives the nth timestep and the dth dimension
         # Dims are ordered as: ['Theta', 'Alpha', 'Theta dot', 'Alpha dot', 'Action']
@@ -326,49 +314,114 @@ def run_muj(params=None, init=None, render=False):
     else:
         init_state = None
 
-    hist_muj, init_state = run_mujoco(BEGIN_UP, POLICY, N_STEPS, FREQUENCY, I_STEPS, params=params, init_state=init_state, render=render)
+    hist_muj, init_state = run_mujoco(BEGIN_UP, POLICY, N_STEPS, FREQUENCY, I_STEPS, params=params,
+                                      init_state=init_state, render=render)
 
     save("../simulator_tuning/data/hist_qube_muj", hist_muj, "../simulator_tuning/data/init_state_muj", init_state)
     return hist_muj, init_state
 
 
 def run_ode(params=None, init=None, render=False):
-
     if init is not None:
         init_state = np.copy(init)
     else:
         init_state = None
 
-    hist_ode = run_sim(BEGIN_UP, POLICY, N_STEPS, FREQUENCY, I_STEPS, params=params, init_state=init_state, render=render)
+    hist_ode = run_sim(BEGIN_UP, POLICY, N_STEPS, FREQUENCY, I_STEPS, params=params, init_state=init_state,
+                       render=render)
 
     save("../simulator_tuning/data/hist_qube_ode", hist_ode, "../simulator_tuning/data/init_state_ode", init_state)
     return hist_ode, init_state
 
 
-def parameter_search(sim_func):
-    import nevergrad as ng
+def parameter_search():
+    from ray import tune
+    from gym_brt.envs.simulation.mujoco import QubeMujoco
+    from copy import deepcopy
+    from simmod.modification.mujoco import MujocoBodyModifier, MujocoJointModifier, MujocoActuatorModifier
 
-    real, init_state = load("../simulator_tuning/data/hist_qube_real", "../simulator_tuning/data/init_state_real")
+    real, INIT_STATE = load("../simulator_tuning/data/hist_qube_real", "../simulator_tuning/data/init_state_real")
 
-    def objective(params):
-        pred, _ = sim_func(BEGIN_UP, POLICY, N_STEPS, FREQUENCY, I_STEPS, params=params, init_state=init_state)
-        res = np.sqrt(np.mean((pred[:, :-1] - real[:, :-1]) ** 2))
-        #if res < 3.3:
-        print(res, params)
-        return res
+    def evaluation_function(config):
+        frequency = FREQUENCY
+        integration_steps = I_STEPS
+        begin_up = BEGIN_UP
+        policy = POLICY
+        n_steps = N_STEPS
+        init_state = deepcopy(INIT_STATE)
 
-    #parametrization = ng.p.Instrumentation(
-    #    params=ng.p.Array(init=[4.95104048e-04, 3.21397834e-05], mutable_sigma=True).set_bounds(0.0000001, 0.0005, method="bouncing")#.set_mutation(sigma=0.01)
-    #)
+        print("step")
 
-    lower = np.array([5, 0.01, 0.01])
-    upper = np.array([10, 1.0, 1.0])
-    parametrization = ng.p.Instrumentation(
-        params=ng.p.Array(init=[8.4, 0.042, 0.042], mutable_sigma=True).set_bounds(lower, upper, method="bouncing").set_mutation(sigma=0.01)
-    )
+        with QubeMujoco(frequency=frequency, integration_steps=integration_steps, max_voltage=18.0) as qube:
+            qube.Rm = config["Rm"] if "Rm" in config else qube.Rm
+            qube.kt = config["kt"] if "kt" in config else qube.kt
+            qube.km = config["km"] if "km" in config else qube.km
+            body_mod = MujocoBodyModifier(qube.sim)
+            jnt_mod = MujocoJointModifier(qube.sim)
+            if "mass_arm" in config:
+                body_mod.set_mass("arm", config["mass_arm"])
+            if "mass_pole" in config:
+                body_mod.set_mass("pole", config["mass_pole"])
+            if "damping_arm_pole" in config:
+                jnt_mod.set_damping("arm_pole", config["damping_arm_pole"])
+            if "damping_base_motor" in config:
+                jnt_mod.set_damping("base_motor", config["damping_base_motor"])
+            if "gear_motor_rotation" in config:
+                act_mod = MujocoActuatorModifier(qube.sim)
+                act_mod.set_gear("motor_rotation", config["gear_motor_rotation"])
 
-    optimizer = ng.optimizers.TwoPointsDE(parametrization=parametrization, budget=300)
-    recommendation = optimizer.minimize(objective)
+            def set_init_from_ob(ob):
+                pos = ob[:2]
+                pos[1] *= -1
+                vel = ob[2:]
+                vel[1] *= -1
+
+                qube.set_state(pos, vel)
+                return qube._get_obs()
+
+            if begin_up is True:
+                s = qube.reset_up()
+            elif begin_up is False:
+                s = qube.reset_down()
+
+            if init_state is not None:
+                s = set_init_from_ob(init_state)
+
+            a = policy(s, step=0)
+            s_hist = [s]
+            a_hist = [a]
+
+            for i in range(n_steps):
+                s = qube.step(a)
+                a = policy(s, step=i + 1, frequency=frequency)
+
+                s_hist.append(s)  # States
+                a_hist.append(a)  # Actions
+
+            # Return a 2d array, hist[n,d] gives the nth timestep and the dth dimension
+            # Dims are ordered as: ['Theta', 'Alpha', 'Theta dot', 'Alpha dot', 'Action']
+            pred = np.concatenate((np.array(s_hist), np.array(a_hist)), axis=1)
+
+        score = np.sqrt(np.mean((pred[:, :-1] - real[:, :-1]) ** 2))
+        tune.report(score=score)
+
+    # TODO: Set configuration
+    configuration = {
+        "damping_arm_pole": tune.grid_search(np.arange(1e-06, 1e-04, 1e-06).tolist()),
+        "damping_base_motor": tune.grid_search(np.arange(1e-06, 1e-04, 1e-06).tolist()),
+        "gear_motor_rotation": tune.grid_search(np.arange(0.5, 1.5, 0.1).tolist()),
+        "mass_arm": tune.grid_search(np.arange(0.006, 0.007, 0.0001).tolist()),
+        "mass_motor": tune.grid_search(np.arange(0.088, 0.09, 0.0001).tolist()),
+        "Rm": tune.grid_search(np.arange(8., 9.1, 0.1).tolist()),
+        "kt": tune.grid_search(np.arange(0.035, 0.048, 0.001).tolist()),
+        "km": tune.grid_search(np.arange(0.035, 0.048, 0.001).tolist()),
+    }
+
+    analysis = tune.run(evaluation_function, config=configuration)
+
+    # Get a dataframe for analyzing trial results.
+    recommendation = analysis.get_best_config(metric="score")
+    print("Best config: ", recommendation)
 
     return recommendation
 
@@ -394,9 +447,9 @@ def visualize(plot_real_qube=False, plot_mujoco=False, plot_ode=False):
         hists.append(hist_ode)
         labels.append("ODE")
 
-    #if plot_mujoco and plot_real_qube:
-        #res = np.sqrt(np.mean((hist_qube[:, :-1] - hist_muj[:, :-1]) ** 2))
-        #print(res)
+    # if plot_mujoco and plot_real_qube:
+    # res = np.sqrt(np.mean((hist_qube[:, :-1] - hist_muj[:, :-1]) ** 2))
+    # print(res)
 
     plot_results(hists=hists, labels=labels, normalize=['alpha'])
 
@@ -411,11 +464,10 @@ if __name__ == '__main__':
     POLICY = zero_policy
     BEGIN_UP = True
 
-    PARAMETER_SEARCH = False
-    SIM_FUNC = run_mujoco
+    PARAMETER_SEARCH = True
 
     if PARAMETER_SEARCH:
-        rec = parameter_search(SIM_FUNC)
+        rec = parameter_search()
         print(f"Last recommendation: {rec}")
     else:
         # Choose which mode should be run
@@ -437,8 +489,8 @@ if __name__ == '__main__':
         if RUN_REAL:
             run_real()
         _, init = load("../simulator_tuning/data/hist_qube_real", "../simulator_tuning/data/init_state_real")
-        #_, init = load("../simulator_tuning/data/hist_qube_real_swingup", "../simulator_tuning/data/init_state_real_swingup")
-        #init = np.array([0, 0, 0, 0]) + np.random.uniform(size=4, low=-0.01, high=0.01)
+        # _, init = load("../simulator_tuning/data/hist_qube_real_swingup", "../simulator_tuning/data/init_state_real_swingup")
+        # init = np.array([0, 0, 0, 0]) + np.random.uniform(size=4, low=-0.01, high=0.01)
         print(f"Initialisation state for the simulations: \n {init}")
         if RUN_MUJ:
             run_muj(init=init, render=RENDER_MUJ)

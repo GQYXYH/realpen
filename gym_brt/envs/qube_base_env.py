@@ -177,9 +177,9 @@ class QubeBaseEnv(gym.Env):
             if self._viewer is None:
                     from gym_brt.envs.rendering import QubeRenderer
                     self._viewer = QubeRenderer(self._theta, self._alpha, self._frequency)
-            self._viewer.render(self._theta, self._alpha)
+            return self._viewer.render(self._theta, self._alpha)
         else:
-            self.qube.render()
+            return self.qube.render(mode=mode)
 
     def close(self, type=None, value=None, traceback=None):
         # Safely close the Qube (important on hardware)

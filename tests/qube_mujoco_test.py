@@ -3,13 +3,7 @@ import numpy as np
 from gym_brt.envs import QubeSwingupEnv, QubeBeginUpEnv, QubeBeginDownEnv
 from gym_brt.envs.simulation.mujoco import QubeMujoco
 
-xml_path = "../gym_brt/data/xml/qube_cable.xml"
-model = mujoco_py.load_model_from_path(xml_path)
-sim = mujoco_py.MjSim(model)
-
-print(model.get_xml())
-
-viewer = mujoco_py.MjViewer(sim)
+from gym.wrappers.pixel_observation import PixelObservationWrapper
 
 class ChangingAgent():
 
@@ -49,20 +43,20 @@ def set_init_from_ob(env, ob):
     env.set_state(pos, vel)
     return env._get_obs()
 
-env = QubeMujoco(
-            frequency=100,
-            integration_steps=1,
-            max_voltage=3.0)
-obs = env.reset_up()
+env = QubeBeginDownEnv(frequency=100, use_simulator=True, simulation_mode='mujoco')
+env.reward_range = (-float('inf'), float('inf'))
+env = PixelObservationWrapper(env)
+obs = env.reset()
 
-#obs = set_init_from_ob(env, np.array([-0.51234958, -1.05231082, -3.26935014, -10.27925768]))
-t = 0
-while True:
+#from PIL import Image
+#img = Image.fromarray(obs['pixels'], 'RGB')
+#img.show()
+
+for step in range(100):
     action = 0
-    obs = env.step(action)
-    #print(f"Step {t}: \t {obs}, \t \t Action: \t {action}")
+    obs, reward, done, info = env.step(action)
     env.render()
 
-    #if t == 1000:
-    #    break
-    t += 1
+    #img = Image.fromarray(obs['pixels'], 'RGB')
+    #img.show()
+

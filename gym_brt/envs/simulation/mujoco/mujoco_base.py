@@ -44,7 +44,8 @@ class MujocoBase(object):
         if model_path.startswith("/") or model_path.startswith("../"):
             fullpath = model_path
         else:
-            fullpath = os.path.join(os.path.dirname(__file__), "assets", model_path)
+            #fullpath = os.path.join(os.path.dirname(__file__), "assets", model_path)
+            fullpath = os.path.join(os.path.dirname(__file__), "../../../data/xml", model_path)
         if not path.exists(fullpath):
             raise IOError("File %s does not exist" % fullpath)
         self.nsubsteps = n_substeps
@@ -66,6 +67,8 @@ class MujocoBase(object):
         action = self.action_space.sample()
         observation = self.step(action) # observation, _info = self.step(action)
         self._set_observation_space(observation)
+
+        self.reward_range = (-float('inf'), float('inf'))
 
         self.seed()
 
