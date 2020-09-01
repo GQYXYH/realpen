@@ -286,9 +286,9 @@ cdef class QuanserWrapper:
 
         samples_overflowed = hil.hil_task_get_buffer_overflows(self.task)
         if samples_overflowed > self.samples_overflowed:
-            print(
-                "Missed {} samples".format(samples_overflowed - self.samples_overflowed)
-            )
+            # print(
+            #     "Missed {} samples".format(samples_overflowed - self.samples_overflowed)
+            # )
             self.samples_overflowed = samples_overflowed
 
         # Then write voltages_w calculated for previous time step

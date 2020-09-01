@@ -122,7 +122,7 @@ class VisionQubeBeginDownEnv(QubeSwingupEnv):
 
     def __enter__(self):
         print('start camera')
-        self.camera.start_acquisition()
+        # self.camera.start_acquisition()
         return super().__enter__()
 
     def __exit__(self, type, value, traceback):

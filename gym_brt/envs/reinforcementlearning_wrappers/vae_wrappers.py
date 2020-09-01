@@ -45,8 +45,7 @@ class VAEQubeBeginDownEnv(VisionQubeBeginDownEnv):
         elif self.goal_z is -1:
             return 0.
         else:
-            # 64 is max difference (range: -1,1 times 32)
-            return 64-(np.square(self.z - self.goal_z)).mean()
+            return -(np.square(self.z - self.goal_z)).mean()
 
     def get_goal_state(self):
         num_steps = self._frequency*5
