@@ -1,25 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mujoco model="qube">
+
+    <!-- Basic options -->
     <compiler angle="radian" meshdir="../meshes/"/>
     <option timestep="0.004" />
     <size njmax="500" nconmax="100" />
+
+    <!-- Materials & Assets -->
     <asset>
+        <!-- Assets -->
         <include file="shared_assets.xml"/>
+
+        <!-- Textures -->
         <texture type="2d" name="texbody" builtin="flat" rgb1="0 0 0" width="1024" height="1024" />
         <texture type="2d" name="texfloor" builtin="flat" rgb1="1 1 1" width="1024" height="1024" />
-        <texture type="2d" name="texred" builtin="flat" rgb1="0.698 0.1333 0.1333" width="1024" height="1024" />
+        <texture type="2d" name="texred" builtin="flat" rgb1="0.721569 0.25098 0.235294" width="1024" height="1024" />
         <texture type="2d" name="texsilver" builtin="flat" rgb1="0.7529 0.7529 0.7529" width="512" height="512" />
-        <material name="bodyMat" texture="texbody" specular="0.75" shininess="0.1" />
-        <material name="floorMat" texture="texfloor" specular="0.75" shininess="0.3" />
-        <material name="redMat" texture="texred" specular="1" shininess="0.9" />
+
+        <!-- Materials -->
+        <material name="floorMat" texture="texfloor" specular="1.0" shininess="0.1" />
+        <material name="bodyMat" texture="texbody" specular="0.75" shininess="0.3" />
+        <material name="redMat" texture="texred" specular="1.0" shininess="0.9" reflectance="1.0"/>
         <material name="silverMat" texture="texsilver" specular="0.75" shininess="0.6" />
     </asset>
 
     <worldbody>
-        <light diffuse=".8 .8 .8" dir="0 0 -1" directional="false" pos="0.051036 -0.032181818 0.5" specular="0.9 0.9 0.9" castshadow="true"/>
-        <camera pos="-5 -5 15" name="view" euler="-30 0 -45"/>
-        <geom conaffinity="0" contype="0" name="ground" pos="0 0 0" size="5 5 1" type="plane" material="floorMat"/>
+        <!-- Main light -->
+        <light name="light_main" pos="0 -0.475 0.3" diffuse=".8 .8 .8" dir="0 1 -0.75" directional="false" specular="0.9 0.9 0.9" castshadow="true"/>
 
+        <!-- Top & side lights -->
+        <light name="light_top" pos="0 -0.03 0.5" diffuse=".8 .8 .8" dir="0 0 -1" directional="false" specular="0.9 0.9 0.9" castshadow="true"/>
+        <light name="light_right" pos="0.5 -0.03 0.5" diffuse=".6 .6 .6" dir="-1 0 -1" directional="false" specular="0.9 0.9 0.9" castshadow="true"/>
+        <light name="light_left" pos="-0.5 -0.03 0.5" diffuse=".6 .6 .6" dir="1 0 -1" directional="false" specular="0.9 0.9 0.9" castshadow="true"/>
+        
+        <!-- Top & side lights -->
+        <camera name="blackfly" pos="0. -0.45 0.2" euler="1.25663706 0 0"/>
+
+        <!-- Walls -->
+        <geom name="ground" pos="0 0 0" size="5 5 1" type="plane" material="floorMat"/>
+        <geom name="wall_back" pos="0 0.16 0" euler="1.570796327 0 0" size="5 5 1" type="plane" material="floorMat"/>
+        
+
+        <!-- Qube -->
         <body name="base" pos="0 0 0" quat="0 0 0 1">
             <inertial pos="0.000323 -0.00132 0.054992" mass="1.0" fullinertia="0.16666666667 0.16666666667 0.16666666667 0.000000000 0.000000000 0.000000000" />
             <geom name="qube0:base" pos="0.000323 -0.00132 0.054992" type="mesh" contype="0" conaffinity="0" condim="1" friction="0 0 0" material="bodyMat" mesh="qube0:base" />

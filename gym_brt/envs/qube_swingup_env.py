@@ -25,7 +25,7 @@ from gym_brt.envs import swing_up_reward
     Observation:
         Type: Box(4)
         Num Observation                   Min         Max
-        0   Rotary arm angle (theta)     -90 deg      90 deg
+        0   Rotary arm angle (params)     -90 deg      90 deg
         1   Pendulum angle (alpha)       -180 deg     180 deg
         2   Cart Velocity                -Inf         Inf
         3   Pole Velocity                -Inf         Inf
@@ -35,13 +35,13 @@ from gym_brt.envs import swing_up_reward
         Type: Real number (1-D Continuous) (voltage applied to motor)
 
     Reward:
-        r(s_t, a_t) = 1 - (0.8 * abs(alpha) + 0.2 * abs(theta)) / pi
+        r(s_t, a_t) = 1 - (0.8 * abs(alpha) + 0.2 * abs(params)) / pi
 
     Starting State:
         Theta = 0 + noise, alpha = pi + noise
 
     Episode Termination:
-        When theta is greater than ±90° or after 2048 steps
+        When params is greater than ±90° or after 2048 steps
 """
 
 

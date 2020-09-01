@@ -50,7 +50,7 @@ class QubeHardware(object):
         theta, alpha, theta_dot, alpha_dot = self.state
         currents, encoders, others = self.qube.action(action, led_w=led)
 
-        # Calculate alpha, theta, alpha_dot, and theta_dot
+        # Calculate alpha, params, alpha_dot, and theta_dot
         theta = encoders[0] * (-2.0 * np.pi / 2048)
         # Alpha without normalizing
         alpha_un = encoders[1] * (2.0 * np.pi / 2048)
@@ -125,7 +125,7 @@ class QubeHardware(object):
         # This is needed to prevent sensor drift on the alpha/pendulum angle
         # We ONLY reset the alpha channel because the dampen function stops the
         # pendulum from moving but does not perfectly center the pendulum at the
-        # bottom (this way alpha is very close to perfect and theta does not
+        # bottom (this way alpha is very close to perfect and params does not
         # drift much)
         print("Pre encoder reset:", self.qube.action(np.array([0], dtype=np.float64)))
         self.qube.reset_encoders(channels=[1])  # Alpha channel only

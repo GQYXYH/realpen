@@ -57,13 +57,13 @@ class VAEQubeBeginDownEnv(VisionQubeBeginDownEnv):
 
         env.reset()
         state, reward, done, info = env.step(np.array([0], dtype=np.float64))
-        encoder_state = [info['theta'], info['alpha'], info['theta_dot'], info['alpha_dot']]
+        encoder_state = [info['params'], info['alpha'], info['theta_dot'], info['alpha_dot']]
         while ctrl_sys.step < ctrl_sys.sample_freq * (ctrl_sys.t_start + 5):
             # apply signal
             action = ctrl_sys.action(encoder_state)
             # get feedback
             state, reward, done, info = env.step(action)
-            encoder_state = [info['theta'], info['alpha'], info['theta_dot'], info['alpha_dot']]
+            encoder_state = [info['params'], info['alpha'], info['theta_dot'], info['alpha_dot']]
 
             # # store data
             if ctrl_sys.step == ctrl_sys.sample_freq * ctrl_sys.t_start:

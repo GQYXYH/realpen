@@ -56,7 +56,7 @@ class QubeBulletRobot(MJCFBasedRobot):
         print("self.pen.current_position()", self.pen.current_position())
 
         # Equivalents in Mujoco
-        # qpos == np.array([theta, alpha]) == self.sim.data.qpos
+        # qpos == np.array([params, alpha]) == self.sim.data.qpos
         # qvel == np.array([theta_dot, alpha_dot]) == self.sim.data.qvel
         return np.array(
             [

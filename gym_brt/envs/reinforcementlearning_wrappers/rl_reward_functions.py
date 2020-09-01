@@ -38,11 +38,11 @@ def balance_reward(theta, alpha, target_angle):
 #         theta_acceleration = state[6]
 #         alpha_acceleration = state[7]
 #
-#         theta = np.arctan2(theta_y, theta_x)  # arm
+#         params = np.arctan2(theta_y, theta_x)  # arm
 #         alpha = np.arctan2(alpha_y, alpha_x)  # pole
 #
 #         # # By Hand Reard
-#         # cost = 5 * normalize_angle(theta) ** 10 + \
+#         # cost = 5 * normalize_angle(params) ** 10 + \
 #         #         normalize_angle(alpha) ** 2 + \
 #         #         0.01 * action ** 2 + \
 #         #         0.0001 * alpha_velocity ** 2 * max(0,(-abs(normalize_angle(alpha))+1.57)/1.57) ** 2
@@ -63,7 +63,7 @@ def balance_reward(theta, alpha, target_angle):
 #         e_kin = 0.5 * Jp * state[5] ** 2 + 0.5 * Jr * state[4]
 #         e = e_pot + e_kin
 #         reward = e_pot - e_kin * max(0, (-abs(normalize_angle(alpha)) + 1) / 1) ** 2 \
-#                  - 0.002 * normalize_angle(theta) ** 2
+#                  - 0.002 * normalize_angle(params) ** 2
 #         reward = float(reward)
 #
 #         return reward
@@ -83,10 +83,10 @@ def balance_reward(theta, alpha, target_angle):
 #         theta_acceleration = state[6]
 #         alpha_acceleration = state[7]
 #
-#         theta = np.arctan2(theta_y, theta_x)  # arm
+#         params = np.arctan2(theta_y, theta_x)  # arm
 #         alpha = np.arctan2(alpha_y, alpha_x)  # pole
 #
-#         cost = 5 * normalize_angle(theta) ** 10 + \
+#         cost = 5 * normalize_angle(params) ** 10 + \
 #                normalize_angle(alpha) ** 2
 #
 #         reward = -cost
@@ -107,11 +107,11 @@ def balance_reward(theta, alpha, target_angle):
 #         theta_acceleration = state[6]
 #         alpha_acceleration = state[7]
 #
-#         theta = np.arctan2(theta_y, theta_x)  # arm
+#         params = np.arctan2(theta_y, theta_x)  # arm
 #         alpha = np.arctan2(alpha_y, alpha_x)  # pole
 #
 #         # simple cost function
-#         cost = 50 * normalize_angle(alpha) ** 2 - 5 + 0.5*(100 * normalize_angle(theta) ** 4 - 1) #- abs(action[0])*0.1
+#         cost = 50 * normalize_angle(alpha) ** 2 - 5 + 0.5*(100 * normalize_angle(params) ** 4 - 1) #- abs(action[0])*0.1
 #
 #
 #         # # Energy Based Reward
@@ -133,7 +133,7 @@ def balance_reward(theta, alpha, target_angle):
 #         # Q[1, 1] = 5
 #         # Q[2, 2] = 1
 #         # R = np.array([[1]]) * 1
-#         # x = np.array([theta, alpha, alpha_velocity, theta_velocity])
+#         # x = np.array([params, alpha, alpha_velocity, theta_velocity])
 #         # u = np.array([action])
 #         # cost = x.dot(Q).dot(x) + u.dot(R).dot(u)
 #         # cost = float(cost)

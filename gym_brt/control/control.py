@@ -260,7 +260,7 @@ class QubeHoldControl(QubeFlipUpControl):
 # def energy_control_policy(state, **kwargs):
 #     state = _convert_state(state)
 #     # Run energy-based control to flip up the pendulum
-#     theta, alpha, theta_dot, alpha_dot = state
+#     params, alpha, theta_dot, alpha_dot = state
 #     # alpha_dot += alpha_dot + 1e-15
 #
 #     """Implements a energy based swing-up controller"""
@@ -294,7 +294,7 @@ class QubeHoldControl(QubeFlipUpControl):
 # # Hold policy
 # def pd_control_policy(state, **kwargs):
 #     state = _convert_state(state)
-#     theta, alpha, theta_dot, alpha_dot = state
+#     params, alpha, theta_dot, alpha_dot = state
 #     # multiply by proportional and derivative gains
 #     kp_theta = -2.0
 #     kp_alpha = 35.0
@@ -304,7 +304,7 @@ class QubeHoldControl(QubeFlipUpControl):
 #     # If pendulum is within 20 degrees of upright, enable balance control, else zero
 #     if np.abs(alpha) <= (20.0 * np.pi / 180.0):
 #         action = (
-#             theta * kp_theta
+#             params * kp_theta
 #             + alpha * kp_alpha
 #             + theta_dot * kd_theta
 #             + alpha_dot * kd_alpha
@@ -318,7 +318,7 @@ class QubeHoldControl(QubeFlipUpControl):
 # # Flip and Hold
 # def flip_and_hold_policy(state, **kwargs):
 #     state = _convert_state(state)
-#     theta, alpha, theta_dot, alpha_dot = state
+#     params, alpha, theta_dot, alpha_dot = state
 #
 #     # If pendulum is within 20 degrees of upright, enable balance control
 #     if np.abs(alpha) <= (20.0 * np.pi / 180.0):
@@ -331,7 +331,7 @@ class QubeHoldControl(QubeFlipUpControl):
 # # Square wave instead of energy controller flip and hold
 # def square_wave_flip_and_hold_policy(state, **kwargs):
 #     state = _convert_state(state)
-#     theta, alpha, theta_dot, alpha_dot = state
+#     params, alpha, theta_dot, alpha_dot = state
 #
 #     # If pendulum is within 20 degrees of upright, enable balance control
 #     if np.abs(alpha) <= (20.0 * np.pi / 180.0):
@@ -344,7 +344,7 @@ class QubeHoldControl(QubeFlipUpControl):
 # # Hold policy
 # def pd_tracking_control_policy(state, **kwargs):
 #     state = _convert_state(state)
-#     theta, alpha, theta_dot, alpha_dot, theta_target = state
+#     params, alpha, theta_dot, alpha_dot, theta_target = state
 #     # multiply by proportional and derivative gains
 #     kp_theta = -2.0
 #     kp_alpha = 35.0
@@ -359,7 +359,7 @@ class QubeHoldControl(QubeFlipUpControl):
 #     # If pendulum is within 20 degrees of upright, enable balance control, else zero
 #     if np.abs(alpha) <= (20.0 * np.pi / 180.0):
 #         action = (
-#             (theta - theta_target) * kp_theta
+#             (params - theta_target) * kp_theta
 #             + alpha * kp_alpha
 #             + theta_dot * kd_theta
 #             + alpha_dot * kd_alpha

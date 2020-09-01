@@ -42,12 +42,12 @@ from gym_brt.control import (
 
 
 def print_info(state_info, action, reward):
-    theta = state_info["theta"]
+    theta = state_info["params"]
     alpha = state_info["alpha"]
     theta_dot = state_info["theta_dot"]
     alpha_dot = state_info["alpha_dot"]
     print(
-        "State: theta={:06.3f}, alpha={:06.3f}, theta_dot={:06.3f}, alpha_dot={:06.3f}".format(
+        "State: params={:06.3f}, alpha={:06.3f}, theta_dot={:06.3f}, alpha_dot={:06.3f}".format(
             theta, alpha, theta_dot, alpha_dot
         )
     )

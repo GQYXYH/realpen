@@ -10,7 +10,7 @@ from gym_brt.envs.qube_base_env import QubeBaseEnv
 class QubeRotorEnv(QubeBaseEnv):
     def _reward(self):
         # Few options for reward:
-        # - high reward for large alpha_dot and small theta
+        # - high reward for large alpha_dot and small params
         # - reward for matching the action of the RPM controller
         # - reward for how close the pendulum matches a clock hand going at a certain RPM
 

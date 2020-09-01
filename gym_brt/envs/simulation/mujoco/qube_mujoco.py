@@ -37,9 +37,9 @@ class QubeMujoco(QubeSimulatorBase, MujocoBase):
 
     def _get_obs(self):
         """
-        qpos: theta, alpha
+        qpos: params, alpha
         qvel: theta_dot, alpha_dot
-        :return: Numpy array of the form: [theta alpha theta_dot alpha_dot]
+        :return: Numpy array of the form: [params alpha theta_dot alpha_dot]
         """
         theta_before, alpha_before = self.sim.data.qpos
         theta_dot, alpha_dot = self.sim.data.qvel

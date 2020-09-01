@@ -12,7 +12,7 @@ from gym import ObservationWrapper, spaces
 Wrapper classes for the QubeEnv of the quanser driver. The wrappers work as an OpenAi Gym interface. 
 
 These wrappers can be used to get consistent environments with the following state representation:
-[cos(theta), sin(theta), cos(alpha), sin(alpha), theta_dot, alpha_dot]. 
+[cos(params), sin(params), cos(alpha), sin(alpha), theta_dot, alpha_dot]. 
 
 The reward functions provided can be found in rl_reward_functions.py. 
 
@@ -48,7 +48,7 @@ class BlackFlyWrapper(ObservationWrapper):
     Use images from a BlackFly camera as observation
     rather than the observation the environment provides
     """
-    def __init__(self, env, no_image_normalization=False):
+    def __init__(self, env, no_image_normalization=False, additional_process=None):
         super(BlackFlyWrapper, self).__init__(env)
         self.observation_space = spaces.Box(low=0, high=255,
                                             shape=IMAGE_SHAPE, dtype=np.float32)

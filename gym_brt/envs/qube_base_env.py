@@ -17,7 +17,7 @@ except ImportError:
 
 MAX_MOTOR_VOLTAGE = 18
 ACT_MAX = np.asarray([MAX_MOTOR_VOLTAGE], dtype=np.float64)
-# OBS_MAX = [theta, alpha, theta_dot, alpha_dot]
+# OBS_MAX = [params, alpha, theta_dot, alpha_dot]
 OBS_MAX = np.asarray([np.pi / 2, np.pi, np.inf, np.inf], dtype=np.float64)
 
 def normalize_angle(angle):
@@ -159,7 +159,7 @@ class QubeBaseEnv(gym.Env):
         done = self._isdone()
         self._episode_reward += reward
         info = {
-            "theta": self._theta,
+            "params": self._theta,
             "alpha": self._alpha,
             "theta_dot": self._theta_dot,
             "alpha_dot": self._alpha_dot,

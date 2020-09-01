@@ -10,7 +10,7 @@ OBS_MAX = np.asarray([1, 1, 1, 1, np.inf, np.inf], dtype=np.float64)
 Wrapper classes for the QubeEnv of the quanser driver. The wrappers work as an OpenAi Gym interface. 
 
 These wrappers can be used to get consistent environments with the following state representation:
-[cos(theta), sin(theta), cos(alpha), sin(alpha), theta_dot, alpha_dot]. 
+[cos(params), sin(params), cos(alpha), sin(alpha), theta_dot, alpha_dot]. 
 
 The reward functions provided can be found in rl_reward_functions.py. 
 
