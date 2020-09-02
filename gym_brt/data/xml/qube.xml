@@ -21,7 +21,7 @@
         <material name="floorMat" texture="texfloor" specular="1.0" shininess="0.1" />
         <material name="bodyMat" texture="texbody" specular="0.75" shininess="0.3" />
         <material name="redMat" texture="texred" specular="1.0" shininess="0.9" reflectance="1.0"/>
-        <material name="silverMat" texture="texsilver" specular="0.75" shininess="0.6" />
+        <material name="silverMat" texture="texsilver" specular="0.75" shininess="0.6" reflectance="1.0"/>
     </asset>
 
     <worldbody>

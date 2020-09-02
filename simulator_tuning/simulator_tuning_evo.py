@@ -342,15 +342,14 @@ def parameter_search():
 
     real, INIT_STATE = load("../simulator_tuning/data/hist_qube_real", "../simulator_tuning/data/init_state_real")
 
-    def evaluation_function(config):
+    def evaluation_function(config, provided_actions=True):
         frequency = FREQUENCY
         integration_steps = I_STEPS
         begin_up = BEGIN_UP
         policy = POLICY
         n_steps = N_STEPS
         init_state = deepcopy(INIT_STATE)
-
-        print("step")
+        actions = real[:, -1]
 
         with QubeMujoco(frequency=frequency, integration_steps=integration_steps, max_voltage=18.0) as qube:
             qube.Rm = config["Rm"] if "Rm" in config else qube.Rm
@@ -387,13 +386,13 @@ def parameter_search():
             if init_state is not None:
                 s = set_init_from_ob(init_state)
 
-            a = policy(s, step=0)
+            a = actions[0] if provided_actions else policy(s, step=0)
             s_hist = [s]
             a_hist = [a]
 
             for i in range(n_steps):
                 s = qube.step(a)
-                a = policy(s, step=i + 1, frequency=frequency)
+                a = actions[i+1] if provided_actions else policy(s, step=i + 1, frequency=frequency)
 
                 s_hist.append(s)  # States
                 a_hist.append(a)  # Actions
