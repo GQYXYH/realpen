@@ -303,7 +303,7 @@ def run_real():
     # Natural response when starting at α = 0 + noise (upright/inverted)
     hist_qube, init_state = run_qube(BEGIN_UP, POLICY, N_STEPS, FREQUENCY, I_STEPS)
 
-    save("../simulator_tuning/data/hist_qube_real", hist_qube, "../simulator_tuning/data/init_state_real", init_state)
+    save("data/backup/hist_qube_real", hist_qube, "data/backup/init_state_real", init_state)
     return hist_qube, init_state
 
 
@@ -340,7 +340,7 @@ def parameter_search():
     from copy import deepcopy
     from simmod.modification.mujoco import MujocoBodyModifier, MujocoJointModifier, MujocoActuatorModifier
 
-    real, INIT_STATE = load("../simulator_tuning/data/hist_qube_real", "../simulator_tuning/data/init_state_real")
+    real, INIT_STATE = load("data/backup/hist_qube_real", "data/backup/init_state_real")
 
     def evaluation_function(config, provided_actions=True):
         frequency = FREQUENCY
@@ -432,7 +432,7 @@ def visualize(plot_real_qube=False, plot_mujoco=False, plot_ode=False):
     labels = list()
 
     if plot_real_qube:
-        hist_qube, _ = load("../simulator_tuning/data/hist_qube_real", "../simulator_tuning/data/init_state_real")
+        hist_qube, _ = load("data/backup/hist_qube_real", "data/backup/init_state_real")
         hists.append(hist_qube)
         labels.append("Hardware")
 
@@ -453,6 +453,32 @@ def visualize(plot_real_qube=False, plot_mujoco=False, plot_ode=False):
     plot_results(hists=hists, labels=labels, normalize=['alpha'])
 
 
+def record_traj(n_steps, frequency=250):
+    from gym_brt.control import QubeFlipUpControl
+    from gym_brt.envs import QubeSwingupEnv
+
+    solved = False
+    with QubeSwingupEnv(use_simulator=False, frequency=frequency) as env:
+        controller = QubeFlipUpControl(sample_freq=frequency, env=env)
+        while not solved:
+            trajectory = list()
+            actions = list()
+            state = init_state = env.reset()
+            for step in range(n_steps):
+                action = controller.action(state)
+                #trajectory.append(tuple(state, action))
+                trajectory.append(action)
+                actions.append(action)
+                state, reward, done, info = env.step(action)
+                _, alpha, _, _ = state
+                if np.abs(alpha) <= (20.0 * np.pi / 180.0):
+                    solved = True
+                if done:
+                    print(solved)
+                    break
+    return np.concatenate((np.array(trajectory), np.array(actions))), init_state
+
+
 if __name__ == '__main__':
     # Constants between experiments
     FREQUENCY = 100
@@ -463,11 +489,17 @@ if __name__ == '__main__':
     POLICY = zero_policy
     BEGIN_UP = True
 
-    PARAMETER_SEARCH = True
+    PARAMETER_SEARCH = False
+    TRAJ_RECODRING = False
 
     if PARAMETER_SEARCH:
         rec = parameter_search()
         print(f"Last recommendation: {rec}")
+    elif TRAJ_RECODRING:
+        hist, init_state = record_traj(n_steps=N_STEPS, frequency=FREQUENCY)
+        save("../simulator_tuning/data/hist_qube_real", hist,
+             "../simulator_tuning/data/init_state_real", init_state)
+        print('Finished')
     else:
         # Choose which mode should be run
         RUN_REAL = False
@@ -487,7 +519,7 @@ if __name__ == '__main__':
         # # evaluate
         if RUN_REAL:
             run_real()
-        _, init = load("../simulator_tuning/data/hist_qube_real", "../simulator_tuning/data/init_state_real")
+        _, init = load("data/backup/hist_qube_real", "data/backup/init_state_real")
         # _, init = load("../simulator_tuning/data/hist_qube_real_swingup", "../simulator_tuning/data/init_state_real_swingup")
         # init = np.array([0, 0, 0, 0]) + np.random.uniform(size=4, low=-0.01, high=0.01)
         print(f"Initialisation state for the simulations: \n {init}")

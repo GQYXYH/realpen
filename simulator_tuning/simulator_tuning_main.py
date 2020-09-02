@@ -222,17 +222,17 @@ def run_real():
     hist_qube, init_state = run_qube(True, flip_and_hold_policy, nsteps, frequency, i_steps)
 
     import pickle
-    outfile = open("../hist_qube", "wb")
+    outfile = open("data/backup/hist_qube", "wb")
     pickle.dump(hist_qube, outfile)
-    outfile = open("../init_state", "wb")
+    outfile = open("data/backup/init_state", "wb")
     pickle.dump(init_state, outfile)
 
 
 def run(params=None, visualize=False):
     import pickle
-    infile = open("../hist_qube", "rb")
+    infile = open("data/backup/hist_qube", "rb")
     hist_qube = pickle.load(infile)
-    infile = open("../init_state", "rb")
+    infile = open("data/backup/init_state", "rb")
     init_state = pickle.load(infile)
     hist_ode = run_sim(init_state, flip_and_hold_policy, nsteps, frequency, i_steps, params=params)
     print(params)
