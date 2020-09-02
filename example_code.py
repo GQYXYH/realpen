@@ -16,9 +16,9 @@ Reward can be defined under gym_brt/envs/reinforcementlearning_wrappers/rl_rewar
 def interact_with_down_environment():
     frequency = 250
 
-    with QubeSwingupEnv(use_simulator=False, frequency=frequency) as env:
-        controller = QubeFlipUpControl(sample_freq=frequency, env=env)
-        for episode in range(10):
+    with QubeSwingupEnv(frequency=frequency) as env:
+        controller = QubeFlipUpControl(sample_freq=frequency)
+        for episode in range(3):
             ret = 0
             state = env.reset()
             for step in range(30000):
@@ -33,7 +33,7 @@ def interact_with_down_environment():
 def interact_with_balance_env():
     frequency = 250
 
-    with QubeBalanceEnv(use_simulator=True, frequency=frequency) as env:
+    with QubeBalanceEnv(use_simulator=False, frequency=frequency) as env:
         controller = QubeHoldControl(sample_freq=frequency, env=env)
         for episode in range(2):
             state = env.reset()
