@@ -148,7 +148,7 @@ class QubeFlipUpControl(Control):
         energy = pend_torque + (jp / 2.0) * alpha_dot * alpha_dot
 
         u = mu * (energy - ref_energy) * np.sign(-1 * np.cos(alpha) * alpha_dot)
-        u = 1.1 * u
+        #u = 1.1 * u
         u = np.clip(u, -max_u, max_u)
         torque = (mr * lr) * u
         voltage = (rm / kt) * torque
