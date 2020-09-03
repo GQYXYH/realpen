@@ -45,7 +45,7 @@ def set_init_from_ob(env, ob):
 
 env = QubeBeginDownEnv(frequency=100, use_simulator=True, simulation_mode='mujoco')
 env.reward_range = (-float('inf'), float('inf'))
-env = PixelObservationWrapper(env)
+#env = PixelObservationWrapper(env)
 obs = env.reset()
 
 #from PIL import Image
