@@ -490,8 +490,8 @@ if __name__ == '__main__':
     POLICY = zero_policy
     BEGIN_UP = True
 
-    PARAMETER_SEARCH = False
-    TRAJ_RECODRING = True
+    PARAMETER_SEARCH = True
+    TRAJ_RECODRING = False
 
     if PARAMETER_SEARCH:
         rec = parameter_search()
