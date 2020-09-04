@@ -2,6 +2,7 @@ import numpy as np
 from typing import Callable
 from ray.tune.suggest import Searcher
 
+
 class CoordinateDescent(Searcher):
     def __init__(self, metric="mean_loss", mode="min", **kwargs):
         super(CoordinateDescent, self).__init__(metric=metric, mode=mode, **kwargs)
