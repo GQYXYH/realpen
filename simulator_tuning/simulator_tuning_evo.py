@@ -489,7 +489,7 @@ if __name__ == '__main__':
     POLICY = zero_policy
     BEGIN_UP = True
 
-    PARAMETER_SEARCH = False
+    PARAMETER_SEARCH = True
     TRAJ_RECODRING = False
 
     if PARAMETER_SEARCH:
@@ -497,8 +497,8 @@ if __name__ == '__main__':
         print(f"Last recommendation: {rec}")
     elif TRAJ_RECODRING:
         hist, init_state = record_traj(n_steps=N_STEPS, frequency=FREQUENCY)
-        save("../simulator_tuning/data/hist_qube_real", hist,
-             "../simulator_tuning/data/init_state_real", init_state)
+        save("data/hist_qube_real", hist,
+             "data/init_state_real", init_state)
         print('Finished')
     else:
         # Choose which mode should be run
