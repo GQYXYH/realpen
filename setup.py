@@ -4,7 +4,7 @@ from setuptools.command.build_ext import build_ext as _build_ext
 
 # Environment-specific dependencies.
 extras = {
-    'mujoco': ['mujoco_py>=2.0', 'imageio'],
+    'mujoco': ['mujoco_py>=2.0', 'imageio', "ray[tune]"],
     #'bullet': ['pybullet>=1.7.8']
 }
 

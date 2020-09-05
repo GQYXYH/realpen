@@ -1,42 +1,79 @@
-import numpy as np
-from typing import Callable
-from ray.tune.suggest import Searcher
+"""Finding the optimal parameters for a given evaluation function with the Ray Tune Framework via coordinate descent.
+
+Calculate the optimal parameters which maximize/minimize the given error/evaluation function by performing the
+optimization parameter by parameter and holding on the residual parameters during each iteration.
+
+Author: Moritz Schneider
+"""
+
+from typing import Callable, Dict
+
+from ray import tune
 
 
-class CoordinateDescent(Searcher):
-    def __init__(self, metric="mean_loss", mode="min", **kwargs):
-        super(CoordinateDescent, self).__init__(metric=metric, mode=mode, **kwargs)
-        self.optimizer = Optimizer()
-        self.configurations = {}
+def coordinate_descent(params: Dict, configuration: Dict, err_function: Callable, eps: float = 1e-1,
+                       search_kwargs=None, analysis_kwargs=None, max_iters=100):
+    """Performing the coordinate descent over the given parameters.
 
-    def suggest(self, trial_id):
-        configuration = self.optimizer.query()
-        self.configurations[trial_id] = configuration
+    Maximizing/minimizing the given error function parameter by parameter until the stopping threshold or
+    the maximum iterations of coordinate descent are reached. In each iteration the error function is optimized
+    parameter by parameter.
 
-    def on_trial_complete(self, trial_id, result, **kwargs):
-        configuration = self.configurations[trial_id]
-        if result and self.metric in result:
-            self.optimizer.update(configuration, result[self.metric])    
+    To understand some of the arguments better it is encouraged to the documentation of Tune itself:
+    https://docs.ray.io/en/master/tune/index.html
 
-def coordinate_descent(params: np.Array, err_function: Callable, learning_rate: float = .03, eps: float = 1e-10):
-    '''Coordinate gradient descent for linear regression'''
-    # Initialisation of useful values
-    m, n = params.shape
-    eta = learning_rate
+    Args:
+        params: Parameters we want to optimize to fulfill the optimization goal.
+        configuration: Configuration of the parameters for the search algorithm of Tune.
+        err_function: Error/evaluation function we want to minimize/maximize.
+        eps: Stopping threshold for the coordinate descent optimization (outer loop).
+        search_kwargs: Arguments for the 'run' method of Tune.
+        analysis_kwargs: Arguments for 'get_best_config' method of Tune. Optimization mode is defined here.
+        max_iters: Maximum iterations to perform if the given threshold is not achieved.
+
+    Returns:
+        The optimized parameters which minimizes/maximizes the given error function.
+    """
     err_history = []
-    j = 0
+    search_kwargs = search_kwargs if search_kwargs is not None else {}
+    analysis_kwargs = analysis_kwargs if analysis_kwargs is not None else {"metric": "mean_accuracy"}
 
-    while True:
-        # Coordinate descent in vectorized form
-        # h = X @ params
-        # gradient = (X[:, j] @ (h - y))
-        err = err_function(params)
-        err_history.append(err)
-
+    err = err_function(params, use_tune=False)
+    for j in range(max_iters):
+        # Check if threshold is achieved
         if err < eps:
             break
 
-        params[j] = params[j] - eta * err
-        j = j + 1 if j < n else 0
+        # Coordinate descent in vectorized form
+        for x in params:
+            param_config = {x: configuration[x]}
+            params[x] = minimize(evaluation_function=err_function, configuration=param_config,
+                                 search_kwargs=search_kwargs, analysis_kwargs=analysis_kwargs)
 
-    return params, err_history
+        # Calculate new error
+        err = err_function(params, use_tune=False)
+        print(f"Iteration {j + 1} with error {err}.")
+        err_history.append(err)
+    else:
+        raise RuntimeError(f"Stopping threshold '{eps}' for optimization not reached. Value of the last error is '{err}'")
+
+    return params# , err_history
+
+
+def minimize(evaluation_function: Callable, configuration: Dict, search_kwargs: Dict, analysis_kwargs: Dict):
+    """Minimizing/maximizing the given evaluation function for the parameter which is defined in the configuration.
+
+    Args:
+        evaluation_function: Error function we want to minimize/maximize.
+        configuration: Search space dictionary for the parameter we want to optimize.
+        search_kwargs: Arguments for tune.run.
+        analysis_kwargs: Arguments for get_best_config of tune.
+
+    Returns:
+        The new recommendation for the parameter.
+    """
+    if "search_alg" in search_kwargs:
+        search_kwargs["search_alg"] = search_kwargs["search_alg"](**analysis_kwargs)
+    analysis = tune.run(evaluation_function, config=configuration, **search_kwargs)
+    recommendation = analysis.get_best_config(**analysis_kwargs)
+    return recommendation

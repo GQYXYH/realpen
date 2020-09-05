@@ -1,21 +1,28 @@
-"""
-Adapted from:
+"""Base class for Mujoco environments.
+
+This file was adapted from the following implementation:
 https://github.com/openai/gym/blob/master/gym/envs/mujoco/mujoco_env.py
+
+The main difference between both files is, that this class does not inherit from the main environment class of OpenAI
+Gym. This was done to avoid complications since the base class of the QUBE already inherits from the environment class.
+
+Author: Moritz Schneider
 """
 
-from collections import OrderedDict
 import os
+from collections import OrderedDict
+from os import path
 
-
+import numpy as np
 from gym import error, spaces
 from gym.utils import seeding
-import numpy as np
-from os import path
 
 try:
     import mujoco_py
 except ImportError as e:
-    raise error.DependencyNotInstalled("{}. (HINT: you need to install mujoco_py, and also perform the setup instructions here: https://github.com/openai/mujoco-py/.)".format(e))
+    raise error.DependencyNotInstalled(
+        "{}. (HINT: you need to install mujoco_py, and also perform the setup instructions here: https://github.com/openai/mujoco-py/.)".format(
+            e))
 
 DEFAULT_SIZE = 500
 
@@ -37,14 +44,12 @@ def convert_observation_to_space(observation):
 
 
 class MujocoBase(object):
-    """Superclass for all MuJoCo environments.
-    """
+    """Superclass for all MuJoCo environments."""
 
     def __init__(self, model_path, n_substeps=1):
         if model_path.startswith("/") or model_path.startswith("../"):
             fullpath = model_path
         else:
-            #fullpath = os.path.join(os.path.dirname(__file__), "assets", model_path)
             fullpath = os.path.join(os.path.dirname(__file__), "../../../data/xml", model_path)
         if not path.exists(fullpath):
             raise IOError("File %s does not exist" % fullpath)
@@ -65,7 +70,7 @@ class MujocoBase(object):
 
         self._set_action_space()
         action = self.action_space.sample()
-        observation = self.step(action) # observation, _info = self.step(action)
+        observation = self.step(action)  # observation, _info = self.step(action)
         self._set_observation_space(observation)
 
         self.reward_range = (-float('inf'), float('inf'))
@@ -73,7 +78,7 @@ class MujocoBase(object):
         self.seed()
 
     def _set_action_space(self):
-        bounds = self.model.actuator_ctrlrange.copy().astype(np.float32) # TODO: max_voltage is maximum action space
+        bounds = self.model.actuator_ctrlrange.copy().astype(np.float32)  # TODO: max_voltage is maximum action space
         low, high = bounds.T
         self.action_space = spaces.Box(low=low, high=high, dtype=np.float32)
         return self.action_space
@@ -120,9 +125,8 @@ class MujocoBase(object):
         new_state = mujoco_py.MjSimState(old_state.time, qpos, qvel,
                                          old_state.act, old_state.udd_state)
         self.sim.set_state(new_state)
-        #self.sim.forward() # TODO: Why was this line needed?
-        #self.sim.step() # TODO: Why was this line needed?
-
+        # self.sim.forward() # TODO: Why was this line needed?
+        # self.sim.step() # TODO: Why was this line needed?
 
     @property
     def dt(self):

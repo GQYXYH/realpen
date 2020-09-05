@@ -1,5 +1,11 @@
+"""
+
+Author: Moritz Schneider
+"""
+
 import functools
 import pickle
+from copy import deepcopy
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -335,14 +341,20 @@ def run_ode(params=None, init=None, render=False):
 
 
 def parameter_search():
+    """Performing parameter search for the Mujoco simulation to close the Sim2Real gap.
+
+    Returns:
+        The optimized parameters for the simulation.
+    """
     from ray import tune
     from gym_brt.envs.simulation.mujoco import QubeMujoco
-    from copy import deepcopy
     from simmod.modification.mujoco import MujocoBodyModifier, MujocoJointModifier, MujocoActuatorModifier
+    from simulator_tuning.algorithms import coordinate_descent
 
     real, INIT_STATE = load("data/backup/hist_qube_real", "data/backup/init_state_real")
 
-    def evaluation_function(config, provided_actions=True):
+    # Evaluation function to measure the error for coordinate descent
+    def evaluation_function(config, provided_actions=True, use_tune=True):
         frequency = FREQUENCY
         integration_steps = I_STEPS
         begin_up = BEGIN_UP
@@ -392,23 +404,37 @@ def parameter_search():
 
             for i in range(n_steps):
                 s = qube.step(a)
-                a = actions[i+1] if provided_actions else policy(s, step=i + 1, frequency=frequency)
+                a = actions[i + 1] if provided_actions else policy(s, step=i + 1, frequency=frequency)
 
                 s_hist.append(s)  # States
                 a_hist.append(a)  # Actions
 
             # Return a 2d array, hist[n,d] gives the nth timestep and the dth dimension
             # Dims are ordered as: ['Theta', 'Alpha', 'Theta dot', 'Alpha dot', 'Action']
-            pred = np.concatenate((np.array(s_hist), np.array(a_hist)), axis=1)
+            pred = np.concatenate((np.array(s_hist), np.array(a_hist)[:, np.newaxis]), axis=1)
 
-        score = np.sqrt(np.mean((pred[:, :-1] - real[:, :-1]) ** 2))
-        tune.report(score=score)
+        error = np.sqrt(np.mean((pred[:, :-1] - real[:, :-1]) ** 2))
+        if use_tune:
+            tune.report(difference=error)
+        return error
 
-    # TODO: Set configuration
+    # Inital parameters for coordinate descent
+    init_params = {
+        "damping_arm_pole": 3.5e-05,
+        "damping_base_motor": 3e-04,
+        # "gear_motor_rotation": 1.4,
+        "mass_arm": 0.006032518,
+        "mass_motor": 0.088967482,
+        "Rm": 8.4,
+        "kt": 0.042,
+        "km": 0.042,
+    }
+
+    # Search space for the underlying parameter search in coordinate descent
     configuration = {
         "damping_arm_pole": tune.grid_search(np.arange(1e-06, 1e-04, 1e-06).tolist()),
         "damping_base_motor": tune.grid_search(np.arange(1e-06, 1e-04, 1e-06).tolist()),
-        "gear_motor_rotation": tune.grid_search(np.arange(0.5, 1.5, 0.1).tolist()),
+        # "gear_motor_rotation": tune.grid_search(np.arange(0.5, 1.5, 0.1).tolist()),
         "mass_arm": tune.grid_search(np.arange(0.006, 0.007, 0.0001).tolist()),
         "mass_motor": tune.grid_search(np.arange(0.088, 0.09, 0.0001).tolist()),
         "Rm": tune.grid_search(np.arange(8., 9.1, 0.1).tolist()),
@@ -416,10 +442,9 @@ def parameter_search():
         "km": tune.grid_search(np.arange(0.035, 0.048, 0.001).tolist()),
     }
 
-    analysis = tune.run(evaluation_function, config=configuration)
-
-    # Get a dataframe for analyzing trial results.
-    recommendation = analysis.get_best_config(metric="score")
+    # Perform optimization via coordinate descent and get results
+    recommendation = coordinate_descent(init_params, configuration, evaluation_function,
+                                        analysis_kwargs={"metric": "error", "mode": 'min'})
     print("Best config: ", recommendation)
 
     return recommendation
@@ -454,6 +479,15 @@ def visualize(plot_real_qube=False, plot_mujoco=False, plot_ode=False):
 
 
 def record_traj(n_steps, frequency=250):
+    """Records a trajectory on the real Qube to use it for parameter identification for the simulations.
+
+    Args:
+        n_steps: Number of steps for the trajectory.
+        frequency: Frequency to grab values from the Qube.
+
+    Returns:
+        Recorded trajectory from the real Qube.
+    """
     from gym_brt.control import QubeFlipUpControl
     from gym_brt.envs import QubeSwingupEnv
 
@@ -466,7 +500,7 @@ def record_traj(n_steps, frequency=250):
             state = init_state = env.reset()
             for step in range(n_steps):
                 action = controller.action(state)
-                #trajectory.append(tuple(state, action))
+                # trajectory.append(tuple(state, action))
                 trajectory.append(action)
                 actions.append(action)
                 state, reward, done, info = env.step(action)
@@ -489,24 +523,22 @@ if __name__ == '__main__':
     POLICY = zero_policy
     BEGIN_UP = True
 
-    PARAMETER_SEARCH = True
-    TRAJ_RECODRING = False
+    PARAMETER_SEARCH = False
+    TRAJ_RECORDING = False
 
     if PARAMETER_SEARCH:
         rec = parameter_search()
         print(f"Last recommendation: {rec}")
-    elif TRAJ_RECODRING:
+    elif TRAJ_RECORDING:
         hist, init_state = record_traj(n_steps=N_STEPS, frequency=FREQUENCY)
-        save("data/hist_qube_real", hist,
-             "data/init_state_real", init_state)
-        print('Finished')
+        save("data/hist_qube_real", hist, "data/init_state_real", init_state)
     else:
         # Choose which mode should be run
         RUN_REAL = False
         RUN_MUJ = True
         RUN_ODE = True
 
-        RENDER_MUJ = True
+        RENDER_MUJ = False
         RENDER_ODE = False
 
         if RENDER_ODE:
@@ -520,8 +552,6 @@ if __name__ == '__main__':
         if RUN_REAL:
             run_real()
         _, init = load("data/backup/hist_qube_real", "data/backup/init_state_real")
-        # _, init = load("../simulator_tuning/data/hist_qube_real_swingup", "../simulator_tuning/data/init_state_real_swingup")
-        # init = np.array([0, 0, 0, 0]) + np.random.uniform(size=4, low=-0.01, high=0.01)
         print(f"Initialisation state for the simulations: \n {init}")
         if RUN_MUJ:
             run_muj(init=init, render=RENDER_MUJ)
