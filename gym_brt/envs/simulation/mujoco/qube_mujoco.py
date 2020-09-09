@@ -20,9 +20,9 @@ class QubeMujoco(QubeSimulatorBase, MujocoBase):
         self._integration_steps = integration_steps
         self._max_voltage = max_voltage
 
-        self.Rm = 8.4  # Resistance
-        self.kt = 0.042  # Current-torque (N-m/A)
-        self.km = 0.042  # Back-emf constant (V-s/rad)
+        self.Rm = 8.899999999999997  # Resistance #8.4#
+        self.kt = 0.04200000000000001  # Current-torque (N-m/A) #0.042 #
+        self.km = 0.035  # Back-emf constant (V-s/rad) #0.042 #
 
         MujocoBase.__init__(self, XML_PATH, integration_steps)
         self.model.opt.timestep = self._dt

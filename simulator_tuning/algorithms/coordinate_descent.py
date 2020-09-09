@@ -7,11 +7,13 @@ Author: Moritz Schneider
 """
 
 from typing import Callable, Dict
+from copy import deepcopy
 
+import numpy as np
 from ray import tune
 
 
-def coordinate_descent(params: Dict, configuration: Dict, err_function: Callable, eps: float = 1e-1,
+def coordinate_descent(params: Dict, configuration: Dict, err_function: Callable, eps: float = 0.001,
                        search_kwargs=None, analysis_kwargs=None, max_iters=100):
     """Performing the coordinate descent over the given parameters.
 
@@ -38,21 +40,27 @@ def coordinate_descent(params: Dict, configuration: Dict, err_function: Callable
     search_kwargs = search_kwargs if search_kwargs is not None else {}
     analysis_kwargs = analysis_kwargs if analysis_kwargs is not None else {"metric": "mean_accuracy"}
 
-    err = err_function(params, use_tune=False)
+    last_err = 0
+    err = err_function(params)
+    actual_best = {}
     for j in range(max_iters):
         # Check if threshold is achieved
-        if err < eps:
+        if np.abs(err - last_err) < eps:
             break
+        last_err = err
 
         # Coordinate descent in vectorized form
         for x in params:
-            param_config = {x: configuration[x]}
-            params[x] = minimize(evaluation_function=err_function, configuration=param_config,
+            param_config = dict()
+            param_config.update(actual_best)
+            param_config.update({x: configuration[x]})
+            params[x] = minimize(param_id=x, evaluation_function=err_function, configuration=param_config,
                                  search_kwargs=search_kwargs, analysis_kwargs=analysis_kwargs)
+            actual_best[x] = tune.choice([params[x]])
 
         # Calculate new error
-        err = err_function(params, use_tune=False)
-        print(f"Iteration {j + 1} with error {err}.")
+        err = err_function(params)
+        print(f"Iteration {j + 1} with error {err}. Difference to last iteration is {np.abs(err - last_err)}.")
         err_history.append(err)
     else:
         raise RuntimeError(f"Stopping threshold '{eps}' for optimization not reached. Value of the last error is '{err}'")
@@ -60,7 +68,7 @@ def coordinate_descent(params: Dict, configuration: Dict, err_function: Callable
     return params# , err_history
 
 
-def minimize(evaluation_function: Callable, configuration: Dict, search_kwargs: Dict, analysis_kwargs: Dict):
+def minimize(param_id, evaluation_function: Callable, configuration: Dict, search_kwargs: Dict, analysis_kwargs: Dict):
     """Minimizing/maximizing the given evaluation function for the parameter which is defined in the configuration.
 
     Args:
@@ -70,10 +78,10 @@ def minimize(evaluation_function: Callable, configuration: Dict, search_kwargs: 
         analysis_kwargs: Arguments for get_best_config of tune.
 
     Returns:
-        The new recommendation for the parameter.
+        The new recommendation for the parameter, this means the argument which minimizes the evaluation function
     """
     if "search_alg" in search_kwargs:
         search_kwargs["search_alg"] = search_kwargs["search_alg"](**analysis_kwargs)
     analysis = tune.run(evaluation_function, config=configuration, **search_kwargs)
-    recommendation = analysis.get_best_config(**analysis_kwargs)
+    recommendation = analysis.get_best_config(**analysis_kwargs)[param_id]
     return recommendation

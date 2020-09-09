@@ -17,4 +17,5 @@
     <mesh name="qube0:motor:part" file="../meshes/qube_motor_part.stl" />
     <mesh name="qube0:arm" file="../meshes/qube_arm.stl" />
     <mesh name="qube0:pole" file="../meshes/qube_pole.stl" />
+    <mesh name="cube" file="../meshes/cube.stl" />
 </mujoco>

@@ -13,6 +13,7 @@ import numpy as np
 from gym_brt.control.control import _convert_state
 from gym_brt.quanser import QubeHardware, QubeSimulator
 from gym_brt.quanser.qube_interfaces import forward_model_ode
+from gym_brt.envs.reinforcementlearning_wrappers import TrigonometricObservationWrapper, convert_single_state, convert_states_array
 
 
 # from simulator_tuning.qube_simulator_optimize import forward_model_ode_optimize
@@ -134,6 +135,24 @@ def square_wave_flip_and_hold_policy(state, **kwargs):
         action = square_wave_policy(state, **kwargs)
     return action
 
+# Returns a policy which gives out the given predefined actions
+def predefined_actions(actions):
+    actions = actions
+
+    def policy(state, step, **kwargs):
+        return [actions[step]]
+    
+    return policy
+
+def convert_states(states, init):
+
+    init = convert_single_state(init)
+
+    # TODO: Rewrite convert_single_state so that we can also give it an array of states
+    states = np.concatenate((np.cos(states[:, 0]), np.sin(states[:, 0]), np.cos(states[:, 1]), np.sin(states[:, 1]), states[:, 2:]))
+
+    return states, init
+    
 
 # Run on the hardware
 def run_qube(begin_up, policy, nsteps, frequency, integration_steps):
@@ -180,8 +199,7 @@ def run_mujoco(begin_up, policy, n_steps, frequency, integration_steps, params=N
             vel = ob[2:]
             vel[1] *= -1
 
-            print(pos)
-            print(vel)
+            print(np.concatenate((pos, vel)))
 
             qube.set_state(pos, vel)
             return qube._get_obs()
@@ -203,7 +221,7 @@ def run_mujoco(begin_up, policy, n_steps, frequency, integration_steps, params=N
 
         init_state = s
         a = policy(s, step=0)
-        s_hist = [s]
+        s_hist = [s if not STATE_CONVERSION else convert_single_state(s)]
         a_hist = [a]
 
         for i in range(n_steps):
@@ -212,7 +230,7 @@ def run_mujoco(begin_up, policy, n_steps, frequency, integration_steps, params=N
             s = qube.step(a)
             a = policy(s, step=i + 1, frequency=frequency)
 
-            s_hist.append(s)  # States
+            s_hist.append(s if not STATE_CONVERSION else convert_single_state(s))  # States
             a_hist.append(a)  # Actions
 
         # Return a 2d array, hist[n,d] gives the nth timestep and the dth dimension
@@ -247,7 +265,7 @@ def run_sim(begin_up, policy, nsteps, frequency, integration_steps, params=None,
             viewer.render(s[0], s[1])
 
         a = policy(s, step=0)
-        s_hist = [s]
+        s_hist = [s if not STATE_CONVERSION else convert_single_state(s)]
         a_hist = [a]
 
         for i in range(nsteps):
@@ -256,7 +274,7 @@ def run_sim(begin_up, policy, nsteps, frequency, integration_steps, params=None,
             s = qube.step(a)
             a = policy(s, step=i + 1, frequency=frequency)
 
-            s_hist.append(s)  # States
+            s_hist.append(s if not STATE_CONVERSION else convert_single_state(s))  # States
             a_hist.append(a)  # Actions
 
         # Return a 2d array, hist[n,d] gives the nth timestep and the dth dimension
@@ -265,10 +283,13 @@ def run_sim(begin_up, policy, nsteps, frequency, integration_steps, params=None,
 
 
 def plot_results(hists, labels, colors=None, normalize=None):
-    state_dims = ['Theta', 'Alpha', 'Theta dot', 'Alpha dot', 'Action']
+    if STATE_CONVERSION:
+        state_dims = ['Cosine Theta', 'Sine Theta', 'Cosine Alpha', 'Sine Alpha', 'Theta dot', 'Alpha dot', 'Action']
+    else:
+        state_dims = ['Theta', 'Alpha', 'Theta dot', 'Alpha dot', 'Action']
 
-    f, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(5, 1, sharex=True)
-    for i, ax in enumerate((ax1, ax2, ax3, ax4, ax5)):
+    f, axes = plt.subplots(len(state_dims), 1, sharex=True)
+    for i, ax in enumerate(axes):
 
         # Normalize to be between 0 and 2pi
         if normalize is not None:
@@ -309,7 +330,7 @@ def run_real():
     # Natural response when starting at α = 0 + noise (upright/inverted)
     hist_qube, init_state = run_qube(BEGIN_UP, POLICY, N_STEPS, FREQUENCY, I_STEPS)
 
-    save("data/backup/hist_qube_real", hist_qube, "data/backup/init_state_real", init_state)
+    save("data/hist_qube_real", hist_qube, "data/init_state_real", init_state)
     return hist_qube, init_state
 
 
@@ -323,7 +344,7 @@ def run_muj(params=None, init=None, render=False):
     hist_muj, init_state = run_mujoco(BEGIN_UP, POLICY, N_STEPS, FREQUENCY, I_STEPS, params=params,
                                       init_state=init_state, render=render)
 
-    save("../simulator_tuning/data/hist_qube_muj", hist_muj, "../simulator_tuning/data/init_state_muj", init_state)
+    save("./simulator_tuning/data/hist_qube_muj", hist_muj, "./simulator_tuning/data/init_state_muj", init_state)
     return hist_muj, init_state
 
 
@@ -336,7 +357,7 @@ def run_ode(params=None, init=None, render=False):
     hist_ode = run_sim(BEGIN_UP, POLICY, N_STEPS, FREQUENCY, I_STEPS, params=params, init_state=init_state,
                        render=render)
 
-    save("../simulator_tuning/data/hist_qube_ode", hist_ode, "../simulator_tuning/data/init_state_ode", init_state)
+    save("./simulator_tuning/data/hist_qube_ode", hist_ode, "./simulator_tuning/data/init_state_ode", init_state)
     return hist_ode, init_state
 
 
@@ -347,14 +368,16 @@ def parameter_search():
         The optimized parameters for the simulation.
     """
     from ray import tune
+    from mujoco_py.builder import MujocoException
     from gym_brt.envs.simulation.mujoco import QubeMujoco
     from simmod.modification.mujoco import MujocoBodyModifier, MujocoJointModifier, MujocoActuatorModifier
     from simulator_tuning.algorithms import coordinate_descent
 
-    real, INIT_STATE = load("data/backup/hist_qube_real", "data/backup/init_state_real")
+    real, INIT_STATE = load("simulator_tuning/data/hist_qube_real", "simulator_tuning/data/init_state_real")
+    provided_actions=True
 
     # Evaluation function to measure the error for coordinate descent
-    def evaluation_function(config, provided_actions=True, use_tune=True):
+    def evaluation_function(config, checkpoint_dir=None):
         frequency = FREQUENCY
         integration_steps = I_STEPS
         begin_up = BEGIN_UP
@@ -398,24 +421,32 @@ def parameter_search():
             if init_state is not None:
                 s = set_init_from_ob(init_state)
 
-            a = actions[0] if provided_actions else policy(s, step=0)
-            s_hist = [s]
-            a_hist = [a]
+            a = actions[0] #if provided_actions else policy(s, step=0)
+            s_hist = [s if not STATE_CONVERSION else convert_single_state(s)]
+            a_hist = [[a]]
 
             for i in range(n_steps):
-                s = qube.step(a)
-                a = actions[i + 1] if provided_actions else policy(s, step=i + 1, frequency=frequency)
+                try:
+                    s = qube.step(a)
+                except MujocoException:
+                    error = np.inf
+                    tune.report(error=error)
+                    return error
 
-                s_hist.append(s)  # States
-                a_hist.append(a)  # Actions
+                a = actions[i + 1] #if provided_actions else policy(s, step=i + 1, frequency=frequency)
+
+                s_hist.append(s if not STATE_CONVERSION else convert_single_state(s))  # States
+                a_hist.append([a])  # Actions
 
             # Return a 2d array, hist[n,d] gives the nth timestep and the dth dimension
             # Dims are ordered as: ['Theta', 'Alpha', 'Theta dot', 'Alpha dot', 'Action']
-            pred = np.concatenate((np.array(s_hist), np.array(a_hist)[:, np.newaxis]), axis=1)
+            pred = np.concatenate((np.array(s_hist), np.array(a_hist)), axis=1)
 
-        error = np.sqrt(np.mean((pred[:, :-1] - real[:, :-1]) ** 2))
-        if use_tune:
-            tune.report(difference=error)
+        converted_real = convert_states_array(real)
+
+        #error = np.sqrt(np.mean((pred[:, :-1] - real[:, :-1]) ** 2))
+        error = np.sqrt(np.mean((pred[:, :-1] - converted_real[:, :-1]) ** 2))
+        tune.report(error=error)
         return error
 
     # Inital parameters for coordinate descent
@@ -432,14 +463,14 @@ def parameter_search():
 
     # Search space for the underlying parameter search in coordinate descent
     configuration = {
-        "damping_arm_pole": tune.grid_search(np.arange(1e-06, 1e-04, 1e-06).tolist()),
-        "damping_base_motor": tune.grid_search(np.arange(1e-06, 1e-04, 1e-06).tolist()),
+        "damping_arm_pole": tune.grid_search(np.arange(1e-07, 1e-04, 1e-07).tolist()),
+        "damping_base_motor": tune.grid_search(np.arange(1e-05, 1e-02, 1e-06).tolist()),
         # "gear_motor_rotation": tune.grid_search(np.arange(0.5, 1.5, 0.1).tolist()),
         "mass_arm": tune.grid_search(np.arange(0.006, 0.007, 0.0001).tolist()),
         "mass_motor": tune.grid_search(np.arange(0.088, 0.09, 0.0001).tolist()),
         "Rm": tune.grid_search(np.arange(8., 9.1, 0.1).tolist()),
-        "kt": tune.grid_search(np.arange(0.035, 0.048, 0.001).tolist()),
-        "km": tune.grid_search(np.arange(0.035, 0.048, 0.001).tolist()),
+        "kt": tune.grid_search(np.arange(0.03, 0.048, 0.001).tolist()),
+        "km": tune.grid_search(np.arange(0.03, 0.048, 0.001).tolist()),
     }
 
     # Perform optimization via coordinate descent and get results
@@ -457,25 +488,32 @@ def visualize(plot_real_qube=False, plot_mujoco=False, plot_ode=False):
     labels = list()
 
     if plot_real_qube:
-        hist_qube, _ = load("data/backup/hist_qube_real", "data/backup/init_state_real")
+        hist_qube, _ = load("./simulator_tuning/data/hist_qube_real", "./simulator_tuning/data/init_state_real")
+        if STATE_CONVERSION:
+            hist_qube = convert_states_array(hist_qube)
         hists.append(hist_qube)
         labels.append("Hardware")
 
     if plot_mujoco:
-        hist_muj, _ = load("../simulator_tuning/data/hist_qube_muj", "../simulator_tuning/data/init_state_muj")
+        hist_muj, _ = load("./simulator_tuning/data/hist_qube_muj", "./simulator_tuning/data/init_state_muj")
         hists.append(hist_muj)
         labels.append("Mujoco")
 
     if plot_ode:
-        hist_ode, _ = load("../simulator_tuning/data/hist_qube_ode", "../simulator_tuning/data/init_state_muj")
+        hist_ode, _ = load("./simulator_tuning/data/hist_qube_ode", "./simulator_tuning/data/init_state_muj")
         hists.append(hist_ode)
         labels.append("ODE")
 
-    # if plot_mujoco and plot_real_qube:
-    # res = np.sqrt(np.mean((hist_qube[:, :-1] - hist_muj[:, :-1]) ** 2))
-    # print(res)
 
-    plot_results(hists=hists, labels=labels, normalize=['alpha'])
+    # if plot_mujoco and plot_real_qube:
+    res = np.sqrt(np.mean((hist_qube[:, :-1] - hist_muj[:, :-1]) ** 2))
+    print("Mujoco: ", res)
+    res = np.sqrt(np.mean((hist_qube[:, :-1] - hist_ode[:, :-1]) ** 2))
+    print("ODE: ", res)
+
+    normalization = ['alpha'] if not STATE_CONVERSION else None
+
+    plot_results(hists=hists, labels=labels, normalize=normalization)
 
 
 def record_traj(n_steps, frequency=250):
@@ -495,35 +533,36 @@ def record_traj(n_steps, frequency=250):
     with QubeSwingupEnv(use_simulator=False, frequency=frequency) as env:
         controller = QubeFlipUpControl(sample_freq=frequency, env=env)
         while not solved:
-            trajectory = list()
-            actions = list()
             state = init_state = env.reset()
+            action = controller.action(state)
+            actions = [action]
+            trajectory = [state]
             for step in range(n_steps):
-                action = controller.action(state)
-                # trajectory.append(tuple(state, action))
-                trajectory.append(action)
-                actions.append(action)
                 state, reward, done, info = env.step(action)
-                _, alpha, _, _ = state
-                if np.abs(alpha) <= (20.0 * np.pi / 180.0):
+                trajectory.append(state)
+                action = controller.action(state)
+                actions.append(action)
+                if np.abs(state[1]) <= (20.0 * np.pi / 180.0):
                     solved = True
                 if done:
                     print(solved)
                     break
-    return np.concatenate((np.array(trajectory), np.array(actions))), init_state
+    output = np.concatenate((np.array(trajectory), np.array(actions)), axis=1)
+    return output, init_state
 
 
 if __name__ == '__main__':
     # Constants between experiments
     FREQUENCY = 100
-    run_time = 10  # in seconds
+    run_time = 7.5  # in seconds
     N_STEPS = int(run_time * FREQUENCY)
-    I_STEPS = 1  # Iteration steps
+    I_STEPS = 1  # Iteration steps 
     plt.rcParams["figure.figsize"] = (20, 20)  # make graphs BIG
     POLICY = zero_policy
-    BEGIN_UP = True
+    BEGIN_UP = False
+    STATE_CONVERSION = True
 
-    PARAMETER_SEARCH = False
+    PARAMETER_SEARCH = True
     TRAJ_RECORDING = False
 
     if PARAMETER_SEARCH:
@@ -531,7 +570,7 @@ if __name__ == '__main__':
         print(f"Last recommendation: {rec}")
     elif TRAJ_RECORDING:
         hist, init_state = record_traj(n_steps=N_STEPS, frequency=FREQUENCY)
-        save("data/hist_qube_real", hist, "data/init_state_real", init_state)
+        save("./simulator_tuning/data/hist_qube_real", hist, "./simulator_tuning/data/init_state_real", init_state)
     else:
         # Choose which mode should be run
         RUN_REAL = False
@@ -551,7 +590,13 @@ if __name__ == '__main__':
         # # evaluate
         if RUN_REAL:
             run_real()
-        _, init = load("data/backup/hist_qube_real", "data/backup/init_state_real")
+        traj, init = load("./simulator_tuning/data/hist_qube_real", "./simulator_tuning/data/init_state_real")
+
+        #if STATE_CONVERSION:
+        #    init = convert_single_state(init)
+        #    traj = convert_states_array(traj)
+
+        POLICY = predefined_actions(traj[:, -1])
         print(f"Initialisation state for the simulations: \n {init}")
         if RUN_MUJ:
             run_muj(init=init, render=RENDER_MUJ)
