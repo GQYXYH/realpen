@@ -10,14 +10,14 @@ model = load_model_from_path("./gym_brt/data/xml/qube_cable_long.xml")
 sim = MjSim(model)
 viewer = MjViewer(sim)
 step = 0
-ctrl = 1
+ctrl = 10
     
-#print(model.get_xml())
+print(model.get_xml())
 
 while True:
     sim.data.ctrl[:] = ctrl
-    #sim.step()          
-    ctrl = 0
+    sim.step()          
+    ctrl = 10    
 
     #theta_before, alpha_before = sim.data.qpos
     #theta_dot, alpha_dot = sim.data.qvel

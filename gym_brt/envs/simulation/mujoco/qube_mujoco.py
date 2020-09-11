@@ -16,13 +16,13 @@ class QubeMujoco(QubeSimulatorBase, MujocoBase):
     """Class for the Mujoco simulator."""
 
     def __init__(self, frequency: float = 250, integration_steps: int = 1, max_voltage: float = 18.0):
-        self._dt = 1.0 / frequency  # TODO: See MujocoBase dt property
+        self._dt = 1.0 / frequency  # TODO: PyBullet aquivalent
         self._integration_steps = integration_steps
         self._max_voltage = max_voltage
 
-        self.Rm = 8.899999999999997  # Resistance #8.4#
-        self.kt = 0.04200000000000001  # Current-torque (N-m/A) #0.042 #
-        self.km = 0.035  # Back-emf constant (V-s/rad) #0.042 #
+        self.Rm = 8.4 #8.899999999999997  # Resistance
+        self.kt = 0.042 #0.04200000000000001  # Current-torque (N-m/A)
+        self.km = 0.042 #0.035  # Back-emf constant (V-s/rad)
 
         MujocoBase.__init__(self, XML_PATH, integration_steps)
         self.model.opt.timestep = self._dt
