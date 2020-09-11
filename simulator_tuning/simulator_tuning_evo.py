@@ -1,4 +1,6 @@
 """
+Simulator tuning with Ray Tune for the Mujoco and the PyBullet Environment.
+Nevergrad, Scikit, etc. usable via the interface of Tune.
 
 Author: Moritz Schneider
 """
@@ -187,11 +189,8 @@ def run_qube(begin_up, policy, nsteps, frequency, integration_steps):
 
 def run_mujoco(begin_up, policy, n_steps, frequency, integration_steps, params=None, init_state=None, render=False):
     from gym_brt.envs.simulation.mujoco import QubeMujoco
-    with QubeMujoco(
-            frequency=frequency,
-            integration_steps=integration_steps,
-            max_voltage=18.0
-    ) as qube:
+    
+    with QubeMujoco(frequency=frequency, integration_steps=integration_steps, max_voltage=18.0) as qube:
 
         def set_init_from_ob(ob):
             pos = ob[:2]
@@ -214,10 +213,6 @@ def run_mujoco(begin_up, policy, n_steps, frequency, integration_steps, params=N
 
         if render:
             qube.render()
-
-        # if params is not None:
-        # qube.model.dof_damping[:] = params[:]
-        # qube.actuation_consts[:] = params[:]
 
         init_state = s
         a = policy(s, step=0)
