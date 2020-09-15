@@ -142,3 +142,4 @@ cython_debug/
 /.vscode/
 
 ./gym_brt/data/config/configuration.py
+gym_brt/data/config/configuration.py
