@@ -6,6 +6,8 @@ import numpy as np
 from scipy import linalg
 from scipy import signal
 
+from gym_brt.data.config import configuration as config
+
 # Set the motor saturation limits for the Aero and Qube
 AERO_MAX_VOLTAGE = 15.0
 QUBE_MAX_VOLTAGE = 6.0
@@ -135,20 +137,22 @@ class QubeFlipUpControl(Control):
         max_u = 8  # Max action is 6m/s^2
 
         # System parameters
-        jp = 3.3282e-5
-        lp = 0.129
-        lr = 0.085
-        mp = 0.024
-        mr = 0.095
-        rm = 8.4
-        g = 9.81
-        kt = 0.042
+        jp = config.JP
+        lp = config.LP
+        lr = config.LR
+        mp = config.MP
+        mr = config.MR
+        rm = config.RM
+        g = config.G
+        kt = config.KT
+
+        multiplicator = config.VOLTAGE_MULTIPLICATOR
 
         pend_torque = (1 / 2) * mp * g * lp * (1 + np.cos(alpha))
         energy = pend_torque + (jp / 2.0) * alpha_dot * alpha_dot
 
         u = mu * (energy - ref_energy) * np.sign(-1 * np.cos(alpha) * alpha_dot)
-        #u = 1.1 * u
+        u = multiplicator * u
         u = np.clip(u, -max_u, max_u)
         torque = (mr * lr) * u
         voltage = (rm / kt) * torque
