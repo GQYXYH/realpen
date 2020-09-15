@@ -189,7 +189,7 @@ def run_qube(begin_up, policy, nsteps, frequency, integration_steps):
 
 def run_mujoco(begin_up, policy, n_steps, frequency, integration_steps, params=None, init_state=None, render=False):
     from gym_brt.envs.simulation.mujoco import QubeMujoco
-    
+
     with QubeMujoco(frequency=frequency, integration_steps=integration_steps, max_voltage=18.0) as qube:
 
         def set_init_from_ob(ob):
@@ -440,6 +440,7 @@ def parameter_search():
         converted_real = convert_states_array(real)
 
         #error = np.sqrt(np.mean((pred[:, :-1] - real[:, :-1]) ** 2))
+        # Calculate the error excluding the actions
         error = np.sqrt(np.mean((pred[:, :-1] - converted_real[:, :-1]) ** 2))
         tune.report(error=error)
         return error

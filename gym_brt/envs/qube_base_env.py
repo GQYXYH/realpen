@@ -159,7 +159,7 @@ class QubeBaseEnv(gym.Env):
         done = self._isdone()
         self._episode_reward += reward
         info = {
-            "params": self._theta,
+            "theta": self._theta,
             "alpha": self._alpha,
             "theta_dot": self._theta_dot,
             "alpha_dot": self._alpha_dot,
