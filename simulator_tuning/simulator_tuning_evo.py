@@ -15,7 +15,7 @@ import numpy as np
 from gym_brt.control.control import _convert_state
 from gym_brt.quanser import QubeHardware, QubeSimulator
 from gym_brt.quanser.qube_interfaces import forward_model_ode
-from gym_brt.envs.reinforcementlearning_wrappers import TrigonometricObservationWrapper, convert_single_state, convert_states_array
+from gym_brt.envs.reinforcementlearning_extensions import TrigonometricObservationWrapper, convert_single_state, convert_states_array
 
 
 # from simulator_tuning.qube_simulator_optimize import forward_model_ode_optimize

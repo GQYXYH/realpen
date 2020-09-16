@@ -9,7 +9,7 @@ Examples for interacting with the OpenAI gym like environements.
 Descriptions of the environemts can be found in in the classes itself.
 Energy Based Swing Up and LQR controller are implemented in QubeFlipUpControl. 
 
-Reward can be defined under gym_brt/envs/reinforcementlearning_wrappers/rl_reward_functions.py
+Reward can be defined under gym_brt/envs/reinforcementlearning_extensions/rl_reward_functions.py
 """
 
 
