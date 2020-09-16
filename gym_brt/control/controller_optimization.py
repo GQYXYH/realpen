@@ -6,7 +6,7 @@ import numpy as np
 
 from gym_brt.envs import QubeBeginDownEnv, convert_state
 from gym_brt.control import QubeFlipUpControl
-from gym_brt.envs.reinforcementlearning_wrappers.rl_wrappers import FREQUENCY
+from gym_brt.data.config.configuration import FREQUENCY
 
 
 def optimize_controller():

@@ -19,9 +19,6 @@ Wrapper always needs to be used like
 to ensure safe closure of camera and qube!
 """
 
-FREQUENCY = 150
-
-
 class QubeBeginDownEnv(QubeSwingupEnv):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
