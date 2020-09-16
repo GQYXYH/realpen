@@ -5,7 +5,7 @@ After pulling from the repository, make sure that the your file will not be trac
 $ git update-index --skip-worktree FILENAME
 ```
 
-Example:
+### Example
 ```git
 $ git update-index --skip-worktree gym_brt/data/config/configuration.py
 ```

@@ -6,11 +6,10 @@ import numpy as np
 from scipy import linalg
 from scipy import signal
 
-from gym_brt.data.config import configuration as config
+from gym_brt import configuration as config
 
 # Set the motor saturation limits for the Aero and Qube
 AERO_MAX_VOLTAGE = 15.0
-QUBE_MAX_VOLTAGE = 6.0
 
 
 def _convert_state(state):
@@ -214,7 +213,7 @@ class QubeFlipUpControl(Control):
         voltages = np.array([action], dtype=np.float64)
 
         # set the saturation limit to +/- the Qube saturation voltage
-        np.clip(voltages, -QUBE_MAX_VOLTAGE, QUBE_MAX_VOLTAGE, out=voltages)
+        np.clip(voltages, -config.QUBE_MAX_VOLTAGE, config.QUBE_MAX_VOLTAGE, out=voltages)
         assert voltages.shape == self.action_shape
         return voltages
 
