@@ -23,7 +23,7 @@ class PIDCtrl:
     not reached (useful for counteracting resistance from the power cord).
     """
 
-    def __init__(self, fs_ctrl, K=None, th_des=0.0, tol=2e-3):
+    def __init__(self, fs_ctrl, K=None, th_des=0.0, tol=1e-3):
         self.done = False
         self.K = K if K is not None else [2.5, 0.0, 0.5, 0.0]
         self.th_des = th_des
@@ -54,7 +54,7 @@ class GoToLimCtrl:
         self.sign = 1 if positive else -1
         self.u_max = u_max
         self.cnt = 0
-        self.cnt_done = int(0.4*fs_ctrl)
+        self.cnt_done = int(0.3*fs_ctrl)
 
     def __call__(self, x):
         th, _, _, _ = x

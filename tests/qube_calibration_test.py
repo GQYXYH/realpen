@@ -11,7 +11,7 @@ import math
 def calibrate():
     frequency = 120
     u_max = 1.0
-    desired_theta = (math.pi/180.) * -45.0
+    desired_theta = (math.pi/180.) * 0.0
 
     with QubeSwingupEnv(frequency=frequency) as env:
         controller = CalibrCtrl(fs_ctrl=frequency, u_max=u_max, th_des=desired_theta)
