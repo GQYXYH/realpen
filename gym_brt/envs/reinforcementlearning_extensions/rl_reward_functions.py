@@ -14,7 +14,9 @@ def swing_up_reward(theta, alpha, target_angle):
             (0.8 * np.abs(alpha) + 0.2 * np.abs(target_angle - theta))
             / np.pi
     )
-    return max(reward, 0)  # Clip for the follow env case
+
+    # if np.abs(alpha) < 10 / 180 * np.pi: reward *= 3
+    return max(reward, 0) ** 2  # Clip for the follow env case
 
 
 def balance_reward(theta, alpha, target_angle):

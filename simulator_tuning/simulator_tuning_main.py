@@ -3,7 +3,7 @@ import functools
 import matplotlib.pyplot as plt
 
 import numpy as np
-from gym_brt.envs.reinforcementlearning_wrappers.rl_wrappers import FREQUENCY
+from gym_brt.data.config.configuration import FREQUENCY
 
 from gym_brt.quanser import QubeHardware, QubeSimulator
 from gym_brt.quanser.qube_interfaces import forward_model_ode

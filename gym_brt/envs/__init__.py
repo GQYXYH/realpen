@@ -1,4 +1,4 @@
-from gym_brt.envs.reinforcementlearning_wrappers.rl_reward_functions import (
+from gym_brt.envs.reinforcementlearning_extensions.rl_reward_functions import (
     swing_up_reward,
     balance_reward
 )
@@ -11,7 +11,7 @@ from gym_brt.envs.qube_swingup_env import (
     QubeSwingupEnv,
 )
 
-from gym_brt.envs.reinforcementlearning_wrappers.rl_wrappers import (
+from gym_brt.envs.reinforcementlearning_extensions.rl_gym_classes import (
     QubeBeginUpEnv,
     QubeBeginDownEnv,
     RandomStartEnv,
