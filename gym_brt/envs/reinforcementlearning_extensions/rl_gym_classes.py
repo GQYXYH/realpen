@@ -1,3 +1,20 @@
+"""
+Extension classes for the QubeEnv of the quanser driver. They work as an OpenAi Gym interface.
+
+These classes can be used to get consistent environments with the following state representation::
+
+    [cos(params), sin(params), cos(alpha), sin(alpha), theta_dot, alpha_dot].
+
+The reward functions provided can be found in rl_reward_functions.py.
+
+These environments always needs to be used like::
+
+    with Environment() as env:
+
+to ensure safe closure of camera and qube!
+
+@Author: Steffen Bleher
+"""
 import numpy as np
 from gym import spaces
 
@@ -6,18 +23,6 @@ from gym_brt.envs.qube_swingup_env import QubeSwingupEnv
 
 OBS_MAX = np.asarray([1, 1, 1, 1, np.inf, np.inf], dtype=np.float64)
 
-"""
-Wrapper classes for the QubeEnv of the quanser driver. The wrappers work as an OpenAi Gym interface. 
-
-These wrappers can be used to get consistent environments with the following state representation:
-[cos(params), sin(params), cos(alpha), sin(alpha), theta_dot, alpha_dot].
-
-The reward functions provided can be found in rl_reward_functions.py. 
-
-Wrapper always needs to be used like
-    with Wrapper as wrapper:
-to ensure safe closure of camera and qube!
-"""
 
 class QubeBeginDownEnv(QubeSwingupEnv):
     def __init__(self, **kwargs):
@@ -34,7 +39,8 @@ class QubeBeginDownEnv(QubeSwingupEnv):
              self._alpha_dot],
             dtype=np.float64,
         )
-    
+
+
 class RandomStartEnv(QubeBeginDownEnv):
 
     def __init__(self, **kwargs):
@@ -47,6 +53,7 @@ class RandomStartEnv(QubeBeginDownEnv):
         theta_vel = 2 * (2 * np.random.rand() - 1)
         alpha_vel = 2 * (2 * np.random.rand() - 1)
         return convert_state_back(np.array([theta, alpha, theta_vel, alpha_vel], dtype=np.float64))
+
 
 class NoisyEnv(QubeBeginDownEnv):
     def _get_state(self):
