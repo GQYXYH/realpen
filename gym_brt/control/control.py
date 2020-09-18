@@ -133,7 +133,7 @@ class QubeFlipUpControl(Control):
         mu = 50.0  # in m/s/J
         ref_energy = 30.0 / 1000.0  # Er in joules
 
-        max_u = 8  # Max action is 6m/s^2
+        max_u = config.QUBE_MAX_VOLTAGE  # Max action is 6m/s^2
 
         # System parameters
         jp = config.JP

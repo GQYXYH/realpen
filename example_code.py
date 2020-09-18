@@ -18,7 +18,7 @@ def interact_with_down_environment():
 
     with QubeSwingupEnv(frequency=frequency) as env:
         controller = QubeFlipUpControl(sample_freq=frequency)
-        for episode in range(3):
+        for episode in range(11):
             ret = 0
             state = env.reset()
             for step in range(30000):
