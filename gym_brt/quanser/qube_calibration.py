@@ -9,6 +9,8 @@ PD was changed to a PID.
 """
 import numpy as np
 import time
+from gym_brt.envs import QubeSwingupEnv
+import math
 
 
 class PIDCtrl:
@@ -98,3 +100,23 @@ class CalibrCtrl:
             self.done = True
         return u
 
+
+def calibrate(desired_theta=0.0):
+    """
+
+    Args:
+        desired_theta: Desired angle of theta in degrees
+
+    Returns:
+
+    """
+    frequency = 120
+    u_max = 1.0
+    desired_theta = (math.pi/180.) * desired_theta
+
+    with QubeSwingupEnv(frequency=frequency) as env:
+        controller = CalibrCtrl(fs_ctrl=frequency, u_max=u_max, th_des=desired_theta)
+        state = env.reset()
+        while not controller.done:
+            action = controller(state)
+            state, reward, _, info = env.step(action)
