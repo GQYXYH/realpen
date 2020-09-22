@@ -108,19 +108,25 @@ class CalibrCtrl:
         return u
 
 
-def calibrate(desired_theta: float = 0.0, frequency: int = 120, u_max: float = 1.0) -> None:
-    """
+def calibrate(desired_theta: float = 0.0, frequency: int = 120, u_max: float = 1.0, unit: str = 'deg') -> None:
+    """Calibration of the Quanser Qube-Servo 2 to a given angle for theta.
 
     Args:
         desired_theta: Desired angle of theta in degrees
         frequency: Frequency during calibration
         u_max: Maximal action to apply during calibration
+        unit: Angle unit of theta
 
     Returns:
         None
 
     """
-    desired_theta = (math.pi/180.) * desired_theta
+    if unit == 'deg':
+        desired_theta = (math.pi/180.) * desired_theta
+    elif unit == 'rad':
+        desired_theta = desired_theta
+    else:
+        raise ValueError(f"Unknown angle unit '{unit}'")
 
     with QubeHardware(frequency=frequency) as qube:
         controller = CalibrCtrl(fs_ctrl=frequency, u_max=u_max, th_des=desired_theta)
@@ -128,5 +134,4 @@ def calibrate(desired_theta: float = 0.0, frequency: int = 120, u_max: float = 1
         state = qube.state
         while not controller.done:
             action = controller(state)
-            #state, reward, _, info = qube.step(action)
             state = qube.step(action)
