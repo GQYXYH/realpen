@@ -9,7 +9,7 @@ import cv2
 import numpy as np
 from gym import ObservationWrapper, Wrapper, spaces, Env
 
-from gym_brt.control import calibrate
+from gym_brt.control import calibrate, PIDCtrl
 from gym_brt.data.config.configuration import FREQUENCY
 
 Array = tp.Union[tp.List, np.ndarray]
@@ -64,12 +64,17 @@ class CalibrationWrapper(Wrapper):
     """Wrapper to calibrate the rotary arm of the Qube to a specific angle."""
 
     def __init__(self, env: Env, desired_theta: float = 0.0, frequency: int = None, u_max: float = 1.0,
-                 noise: bool = False, unit='deg'):
+                 noise: bool = False, unit='deg', save_limits=True, limit_reset_threshold=None):
         super(CalibrationWrapper, self).__init__(env)
         self.frequency = FREQUENCY if frequency is None else frequency
         self.u_max = u_max
         self.desired_theta = desired_theta
         self.noise = noise
+        self.save_limits = save_limits
+        self.limits = None
+        self.counter = 0
+
+        self.limit_reset_threshold = np.inf if limit_reset_threshold is None else limit_reset_threshold
 
         if unit == 'deg':
             self.noise_scale = 45.
@@ -78,12 +83,22 @@ class CalibrationWrapper(Wrapper):
         else:
             self.noise_scale = 0.
 
-    def reset(self, **kwargs):
+    def reset(self, explore_limit=True, **kwargs):
         # First reset the env to be sure the environment it is ready for calibration
         self.env.reset(**kwargs)
+
         # Inject noise
         theta = self.desired_theta + np.random.normal(scale=self.noise_scale) if self.noise else self.desired_theta
+
         # Calibrate
-        calibrate(theta, self.frequency, self.u_max)
+        self.limits = calibrate(theta, self.frequency, self.u_max, limits=self.limits)
+        self.counter += 1
+
+        # Check if we have to reset the limits for calibration
+        if self.counter >= self.limit_reset_threshold:
+            self.limits = None
+            self.counter = 0
+
         # Second reset to get the state and initialize correctly
         return self.env.reset(**kwargs)
+

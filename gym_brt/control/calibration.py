@@ -10,6 +10,7 @@ PD was changed to a PID.
 import numpy as np
 import time
 import warnings
+import typing as tp
 
 # For other platforms where it's impossible to install the HIL SDK
 try:
@@ -108,7 +109,8 @@ class CalibrCtrl:
         return u
 
 
-def calibrate(desired_theta: float = 0.0, frequency: int = 120, u_max: float = 1.0, unit: str = 'deg') -> None:
+def calibrate(desired_theta: float = 0.0, frequency: int = 120, u_max: float = 1.0, unit: str = 'deg',
+              limits: tp.Tuple = None) -> tp.Tuple:
     """Calibration of the Quanser Qube-Servo 2 to a given angle for theta.
 
     Args:
@@ -116,6 +118,7 @@ def calibrate(desired_theta: float = 0.0, frequency: int = 120, u_max: float = 1
         frequency: Frequency during calibration
         u_max: Maximal action to apply during calibration
         unit: Angle unit of theta
+        limits: If the limits are know beforehand they can be passed as a tuple in form (limit left, limit right)
 
     Returns:
         None
@@ -129,9 +132,18 @@ def calibrate(desired_theta: float = 0.0, frequency: int = 120, u_max: float = 1
         raise ValueError(f"Unknown angle unit '{unit}'")
 
     with QubeHardware(frequency=frequency) as qube:
-        controller = CalibrCtrl(fs_ctrl=frequency, u_max=u_max, th_des=desired_theta)
+        if limits is None:
+            controller = CalibrCtrl(fs_ctrl=frequency, u_max=u_max, th_des=desired_theta)
+        else:
+            controller = PIDCtrl(fs_ctrl=frequency, K=[2.5, 0.0, 1.0, 0.0], th_des=desired_theta)
+            controller.th_des += sum(limits) / 2
         qube.reset_down()
         state = qube.state
         while not controller.done:
             action = controller(state)
             state = qube.step(action)
+
+    if limits is None:
+        limits = (controller.go_left.th_lim, controller.go_right.th_lim)
+
+    return limits
