@@ -70,9 +70,7 @@ class QubeBaseEnv(gym.Env):
                 raise ValueError(f"Unsupported simulation type '{simulation_mode}'. "
                                  f"Valid ones are 'ode', 'mujoco' and 'bullet'.")
         else:
-            self.qube = QubeHardware(
-                frequency=self._frequency, max_voltage=MAX_MOTOR_VOLTAGE
-            )
+            self.qube = QubeHardware(frequency=self._frequency, max_voltage=MAX_MOTOR_VOLTAGE)
             self._own_rendering = True
         self.qube.__enter__()
 

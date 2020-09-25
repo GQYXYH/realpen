@@ -9,7 +9,15 @@ PD was changed to a PID.
 """
 import numpy as np
 import time
-from gym_brt.envs import QubeSwingupEnv
+import warnings
+import typing as tp
+
+# For other platforms where it's impossible to install the HIL SDK
+try:
+    from gym_brt.quanser import QubeHardware
+except ImportError:
+    print("Warning: Can not import QubeHardware in calibration.py. Calibration not possible!")
+
 import math
 
 
@@ -59,7 +67,7 @@ class GoToLimCtrl:
         self.cnt_done = int(0.3*fs_ctrl)
 
     def __call__(self, x):
-        th, _, _, _ = x
+        th = x[0]
         if np.abs(th - self.th_lim) > 0:
             self.cnt = 0
             self.th_lim = th
@@ -93,7 +101,7 @@ class CalibrCtrl:
                 self.go_desired.th_des += (self.go_left.th_lim + self.go_right.th_lim) / 2
                 self.set_desired = True
             if time.time() - self.time > self.time_lim:
-                print("timed out")
+                warnings.warn("Timed out setting desired theta. Continue with current setting.")
                 self.go_desired.done = True
             u = -1*self.go_desired(x)
         elif not self.done:
@@ -101,22 +109,41 @@ class CalibrCtrl:
         return u
 
 
-def calibrate(desired_theta=0.0):
-    """
+def calibrate(desired_theta: float = 0.0, frequency: int = 120, u_max: float = 1.0, unit: str = 'deg',
+              limits: tp.Tuple = None) -> tp.Tuple:
+    """Calibration of the Quanser Qube-Servo 2 to a given angle for theta.
 
     Args:
         desired_theta: Desired angle of theta in degrees
+        frequency: Frequency during calibration
+        u_max: Maximal action to apply during calibration
+        unit: Angle unit of theta
+        limits: If the limits are know beforehand they can be passed as a tuple in form (limit left, limit right)
 
     Returns:
+        None
 
     """
-    frequency = 120
-    u_max = 1.0
-    desired_theta = (math.pi/180.) * desired_theta
+    if unit == 'deg':
+        desired_theta = (math.pi/180.) * desired_theta
+    elif unit == 'rad':
+        desired_theta = desired_theta
+    else:
+        raise ValueError(f"Unknown angle unit '{unit}'")
 
-    with QubeSwingupEnv(frequency=frequency) as env:
-        controller = CalibrCtrl(fs_ctrl=frequency, u_max=u_max, th_des=desired_theta)
-        state = env.reset()
+    with QubeHardware(frequency=frequency) as qube:
+        if limits is None:
+            controller = CalibrCtrl(fs_ctrl=frequency, u_max=u_max, th_des=desired_theta)
+        else:
+            controller = PIDCtrl(fs_ctrl=frequency, K=[2.5, 0.0, 1.0, 0.0], th_des=desired_theta)
+            controller.th_des += sum(limits) / 2
+        qube.reset_down()
+        state = qube.state
         while not controller.done:
             action = controller(state)
-            state, reward, _, info = env.step(action)
+            state = qube.step(action)
+
+    if limits is None:
+        limits = (controller.go_left.th_lim, controller.go_right.th_lim)
+
+    return limits

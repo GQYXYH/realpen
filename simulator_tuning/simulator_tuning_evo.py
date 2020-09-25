@@ -460,7 +460,7 @@ def parameter_search():
     # Search space for the underlying parameter search in coordinate descent
     configuration = {
         "damping_arm_pole": tune.grid_search(np.arange(1e-07, 1e-04, 1e-07).tolist()),
-        "damping_base_motor": tune.grid_search(np.arange(1e-05, 1e-02, 1e-06).tolist()),
+        "damping_base_motor": tune.grid_search(np.arange(1e-05, 1e-03, 1e-06).tolist()),
         # "gear_motor_rotation": tune.grid_search(np.arange(0.5, 1.5, 0.1).tolist()),
         "mass_arm": tune.grid_search(np.arange(0.006, 0.007, 0.0001).tolist()),
         "mass_motor": tune.grid_search(np.arange(0.088, 0.09, 0.0001).tolist()),
