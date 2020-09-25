@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 from gym import spaces
 
@@ -11,12 +13,25 @@ energy based rewards can be found in the functions and need to be selected or mo
 
 def swing_up_reward(theta, alpha, target_angle):
     reward = 1 - (
-            (0.8 * np.abs(alpha) + 0.2 * np.abs(target_angle - theta))
+            (0.8 * np.abs(alpha)**2 + 0.2 * np.abs(target_angle - theta)**2)
             / np.pi
     )
 
-    # if np.abs(alpha) < 10 / 180 * np.pi: reward *= 3
-    return max(reward, 0) ** 2  # Clip for the follow env case
+    return reward
+
+    # if np.abs(alpha) < 5 / 180 * np.pi: reward *= 2
+    # if np.abs(alpha) < 3 / 180 * np.pi: reward *= 2
+    # return max(reward, 0) ** 2  # Clip for the follow env case
+
+    # alpha_reward = 1 - alpha/np.pi**2
+    # alpha_reward += max(0, 0.3-(alpha/np.pi/0.06)**2)
+    # theta_reward = 1-theta/np.pi**2
+    # return 4*alpha_reward + theta_reward
+
+    # theta_reward = 1-(theta/(0.33*np.pi))**4
+    # alpha_reward = 4*np.exp(-3*np.abs(alpha/np.pi))
+    #
+    # return theta_reward + alpha_reward
 
 
 def balance_reward(theta, alpha, target_angle):
