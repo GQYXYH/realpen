@@ -9,7 +9,7 @@ import cv2
 import numpy as np
 from gym import ObservationWrapper, Wrapper, spaces, Env
 
-from gym_brt.control import calibrate, PIDCtrl
+from gym_brt.control import calibrate
 from gym_brt.data.config.configuration import FREQUENCY
 
 Array = tp.Union[tp.List, np.ndarray]
@@ -78,9 +78,9 @@ class CalibrationWrapper(Wrapper):
         self.limit_reset_threshold = np.inf if limit_reset_threshold is None else limit_reset_threshold
 
         if unit == 'deg':
-            self.noise_scale = 45.
+            self.noise_scale = 180./8
         elif unit == 'rad':
-            self.noise_scale = np.pi/4
+            self.noise_scale = np.pi/8
         else:
             self.noise_scale = 0.
 

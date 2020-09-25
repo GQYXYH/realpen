@@ -87,7 +87,7 @@ class CalibrCtrl:
         self.limits = limits
         self.go_desired = PIDCtrl(fs_ctrl=fs_ctrl, K=[2.5, 0.0, 1.0, 0.0], th_des=th_des)
         self.time = 0.
-        self.time_lim = 20.
+        self.time_lim = 10.
         self.set_desired = False
 
     def __call__(self, x):
