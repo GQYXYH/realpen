@@ -6,7 +6,7 @@ from mujoco_py import load_model_from_xml, MjSim, MjViewer, load_model_from_path
 def angle_normalize(x: float) -> float:
     return (x % (2 * np.pi)) - np.pi
 
-model = load_model_from_path("./gym_brt/data/xml/qube_cable_long.xml")
+model = load_model_from_path("../gym_brt/data/xml/qube_cable_long.xml")
 sim = MjSim(model)
 viewer = MjViewer(sim)
 step = 0

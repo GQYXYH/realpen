@@ -73,6 +73,7 @@ class CalibrationWrapper(Wrapper):
         self.save_limits = save_limits
         self.limits = None
         self.counter = 0
+        self.qube = self.unwrapped.qube
 
         self.limit_reset_threshold = np.inf if limit_reset_threshold is None else limit_reset_threshold
 
@@ -83,15 +84,16 @@ class CalibrationWrapper(Wrapper):
         else:
             self.noise_scale = 0.
 
-    def reset(self, explore_limit=True, **kwargs):
+    def reset(self, **kwargs):
         # First reset the env to be sure the environment it is ready for calibration
         self.env.reset(**kwargs)
 
         # Inject noise
         theta = self.desired_theta + np.random.normal(scale=self.noise_scale) if self.noise else self.desired_theta
+        print(f"Setting to {theta}")
 
         # Calibrate
-        self.limits = calibrate(theta, self.frequency, self.u_max, limits=self.limits)
+        self.limits = calibrate(self.qube, theta, self.frequency, self.u_max, limits=self.limits)
         self.counter += 1
 
         # Check if we have to reset the limits for calibration
