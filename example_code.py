@@ -8,12 +8,13 @@ Reward can be defined under gym_brt/envs/reinforcementlearning_extensions/rl_rew
 """
 from gym_brt.control import QubeFlipUpControl, QubeHoldControl, calibrate
 from gym_brt.envs import QubeSwingupEnv, QubeBalanceEnv
+import time
 
 
 def interact_with_down_environment(n_trials: int = 1):
     assert n_trials >= 1
     frequency = 120
-    calibrate(0.0)
+    calibrate(desired_theta=0.0)
 
     with QubeSwingupEnv(frequency=frequency) as env:
         controller = QubeFlipUpControl(sample_freq=frequency)
@@ -42,4 +43,5 @@ def interact_with_balance_env(n_trials: int = 1):
 
 
 if __name__ == '__main__':
+    time.sleep(10)
     interact_with_down_environment(n_trials=1)
