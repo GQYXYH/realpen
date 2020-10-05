@@ -1,9 +1,9 @@
-import mujoco_py
 import numpy as np
-from gym_brt.envs import QubeSwingupEnv, QubeBeginUpEnv, QubeBeginDownEnv
-from gym_brt.envs.simulation.mujoco import QubeMujoco
+from gym_brt.envs import QubeBeginDownEnv
 
-from gym.wrappers.pixel_observation import PixelObservationWrapper
+from simmod.modification.mujoco import MujocoTextureModifier, MujocoMaterialModifier
+from simmod.wrappers import UDRMujocoWrapper
+from gym.wrappers import Monitor
 
 class ChangingAgent():
 
@@ -45,17 +45,35 @@ def set_init_from_ob(env, ob):
 
 env = QubeBeginDownEnv(frequency=100, use_simulator=True, simulation_mode='mujoco')
 env.reward_range = (-float('inf'), float('inf'))
-#env = PixelObservationWrapper(env)
+
+## Create the needed modifiers
+#tex_mod = MujocoTextureModifier(env.qube.sim)
+#mat_mod = MujocoMaterialModifier(env.qube.sim)
+
+def video_callable(episode_id):
+    return True
+
+from gym import logger
+logger.set_level(10)
+
+env.metadata.update(env.qube.metadata)
+# Wrap the environment
+#env = UDRMujocoWrapper(env, tex_mod, mat_mod, sim=env.qube.sim)
+env = Monitor(env, directory="./monitor", video_callable=video_callable, force=True)
+
+
 obs = env.reset()
 
 #from PIL import Image
 #img = Image.fromarray(obs['pixels'], 'RGB')
 #img.show()
 
-for step in range(100):
+for step in range(5):
     action = 0
+    #if step % 10 == 0:
+    #    env.alg.step()
     obs, reward, done, info = env.step(action)
-    env.render()
+    #env.render()
 
     #img = Image.fromarray(obs['pixels'], 'RGB')
     #img.show()
