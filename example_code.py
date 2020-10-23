@@ -19,7 +19,7 @@ def interact_with_down_environment(n_trials: int = 1):
         controller = QubeFlipUpControl(sample_freq=frequency)
         for episode in range(n_trials):
             state = env.reset()
-            for step in range(30000):
+            for step in range(100000):
                 action = controller.action(state)
                 state, reward, done, info = env.step(action)
                 if done:
