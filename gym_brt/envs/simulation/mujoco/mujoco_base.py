@@ -24,7 +24,7 @@ except ImportError as e:
         "{}. (HINT: you need to install mujoco_py, and also perform the setup instructions here: https://github.com/openai/mujoco-py/.)".format(
             e))
 
-DEFAULT_SIZE = 500
+DEFAULT_SIZE = 1024
 
 
 def convert_observation_to_space(observation):
@@ -140,7 +140,7 @@ class MujocoBase(object):
                mode='human',
                width=DEFAULT_SIZE,
                height=DEFAULT_SIZE,
-               camera_id=None,
+               camera_id=0,
                camera_name=None):
         if mode == 'rgb_array':
             if camera_id is not None and camera_name is not None:

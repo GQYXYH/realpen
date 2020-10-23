@@ -52,7 +52,7 @@ class PIDCtrl:
         #elif th_des and np.sqrt(all_but_th_squared) < tol / 5.0:
         #    # Increase P-gain on `th` when struggling to reach `th_des`
         #    K[0] += 0.1 * K[0]
-        return np.array([K[0]*(th_des - th) + K[0]*self.integrated_err - K[1]*al - K[2]*thd - K[3]*ald])
+        return -1*np.array([K[0]*(th_des - th) + K[0]*self.integrated_err - K[1]*al - K[2]*thd - K[3]*ald])
 
 
 class GoToLimCtrl:
@@ -74,47 +74,67 @@ class GoToLimCtrl:
         else:
             self.cnt += 1
         self.done = self.cnt == self.cnt_done
-        return np.array([self.sign * self.u_max])
+        return -1*np.array([self.sign * self.u_max])
 
 
 class CalibrCtrl:
     """Go to joint limits, find midpoint, go to the midpoint."""
 
-    def __init__(self, fs_ctrl, u_max=1.0, th_des=0.0):
+    def __init__(self, fs_ctrl, u_max=1.0, th_des=0.0, limits=None):
         self.done = False
         self.go_right = GoToLimCtrl(fs_ctrl, positive=True, u_max=u_max)
         self.go_left = GoToLimCtrl(fs_ctrl, positive=False, u_max=u_max)
+        self.limits = limits
         self.go_desired = PIDCtrl(fs_ctrl=fs_ctrl, K=[2.5, 0.0, 1.0, 0.0], th_des=th_des)
         self.time = 0.
-        self.time_lim = 15.
+        self.time_lim = 10.
         self.set_desired = False
 
     def __call__(self, x):
         u = np.array([0.0])
-        if not self.go_right.done:
-            u = -1*self.go_right(x)
-        elif not self.go_left.done:
-            u = -1*self.go_left(x)
+        if not self.go_right.done and self.limits is None:
+            u = self.go_right(x)
+        elif not self.go_left.done and self.limits is None:
+            u = self.go_left(x)
         elif not self.go_desired.done:
             if not self.set_desired:
+                if self.limits is None:
+                    self.limits = (self.go_left.th_lim, self.go_right.th_lim)
                 self.time = time.time()
-                self.go_desired.th_des += (self.go_left.th_lim + self.go_right.th_lim) / 2
+                self.go_desired.th_des += sum(self.limits) / 2
                 self.set_desired = True
             if time.time() - self.time > self.time_lim:
                 warnings.warn("Timed out setting desired theta. Continue with current setting.")
                 self.go_desired.done = True
-            u = -1*self.go_desired(x)
+            u = self.go_desired(x)
         elif not self.done:
             self.done = True
         return u
 
 
-def calibrate(desired_theta: float = 0.0, frequency: int = 120, u_max: float = 1.0, unit: str = 'deg',
-              limits: tp.Tuple = None) -> tp.Tuple:
+def calibrate(qube=None, desired_theta: float = 0.0, frequency: int = 120, u_max: float = 1.0, unit: str = 'deg',
+              limits: tp.Tuple = None):
+    if unit == 'deg':
+        desired_theta = (math.pi/180.) * desired_theta
+    elif unit == 'rad':
+        desired_theta = desired_theta
+    else:
+        raise ValueError(f"Unknown angle unit '{unit}'")
+
+    if qube is None:
+        with QubeHardware(frequency=frequency) as qube:
+            return calibrate_qube(qube=qube, desired_theta=desired_theta, frequency=frequency, u_max=u_max, limits=limits)
+    else:
+        return calibrate_qube(qube=qube, desired_theta=desired_theta, frequency=frequency, u_max=u_max, limits=limits)
+
+
+def calibrate_qube(qube, desired_theta: float = 0.0, frequency: int = 120, u_max: float = 1.0, limits: tp.Tuple = None)\
+        -> tp.Tuple:
     """Calibration of the Quanser Qube-Servo 2 to a given angle for theta.
 
     Args:
-        desired_theta: Desired angle of theta in degrees
+        qube: The Quanser Qube-Servo 2 environment
+        desired_theta: Desired angle of theta in rad
         frequency: Frequency during calibration
         u_max: Maximal action to apply during calibration
         unit: Angle unit of theta
@@ -124,26 +144,14 @@ def calibrate(desired_theta: float = 0.0, frequency: int = 120, u_max: float = 1
         None
 
     """
-    if unit == 'deg':
-        desired_theta = (math.pi/180.) * desired_theta
-    elif unit == 'rad':
-        desired_theta = desired_theta
-    else:
-        raise ValueError(f"Unknown angle unit '{unit}'")
-
-    with QubeHardware(frequency=frequency) as qube:
-        if limits is None:
-            controller = CalibrCtrl(fs_ctrl=frequency, u_max=u_max, th_des=desired_theta)
-        else:
-            controller = PIDCtrl(fs_ctrl=frequency, K=[2.5, 0.0, 1.0, 0.0], th_des=desired_theta)
-            controller.th_des += sum(limits) / 2
-        qube.reset_down()
-        state = qube.state
-        while not controller.done:
-            action = controller(state)
-            state = qube.step(action)
+    controller = CalibrCtrl(fs_ctrl=frequency, u_max=u_max, th_des=desired_theta, limits=limits)
+    qube.reset_down()
+    state = qube.state
+    while not controller.done:
+        action = controller(state)
+        state = qube.step(action)
 
     if limits is None:
-        limits = (controller.go_left.th_lim, controller.go_right.th_lim)
+        limits = controller.limits
 
     return limits
