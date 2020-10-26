@@ -17,6 +17,9 @@ def swing_up_reward(theta: float, alpha: float, target_angle: float = 0.0):
             / np.pi
     )
 
+    if abs(theta) > (80 * np.pi / 180):
+        reward -= 1
+
     # if np.abs(alpha) < 5 / 180 * np.pi: reward *= 2
     # if np.abs(alpha) < 3 / 180 * np.pi: reward *= 2
     return max(reward, 0) ** 2  # Clip for the follow env case
