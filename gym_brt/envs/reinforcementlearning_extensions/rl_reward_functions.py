@@ -1,17 +1,17 @@
-import math
-
-import numpy as np
-from gym import spaces
-
-from gym_brt.envs.qube_base_env import normalize_angle, ACT_MAX
-
 """
-Reinforcement learning reward functions for the different tasks Balance, Swing Up and General. Simple rewards and 
+Reinforcement learning reward functions for the different tasks Balance, Swing Up and General. Simple rewards and
 energy based rewards can be found in the functions and need to be selected or modified.
 """
+import numpy as np
+import typing as tp
+import math
 
 
-def swing_up_reward(theta, alpha, target_angle):
+def angle_normalize(x):
+    return ((x+np.pi) % (2*np.pi)) - np.pi
+
+
+def swing_up_reward(theta: float, alpha: float, target_angle: float = 0.0):
     reward = 1 - (
             (0.8 * np.abs(alpha) + 0.2 * np.abs(target_angle - theta))
             / np.pi
@@ -30,6 +30,40 @@ def swing_up_reward(theta, alpha, target_angle):
     # alpha_reward = 4*np.exp(-3*np.abs(alpha/np.pi))
     #
     # return theta_reward + alpha_reward
+
+
+def extended_swing_up_reward(state, action: float, target_angle: float = 0.0):
+    theta, alpha, theta_dot, alpha_dot = state
+    cost = angle_normalize(alpha) ** 2
+    cost += 5e-3 * alpha_dot ** 2
+    cost += 1e-1 * np.abs(theta - target_angle) ** 2
+    cost += 2e-2 * theta_dot ** 2
+    cost += 3e-3 * action ** 2
+    return -cost
+
+
+def cosine_swing_up_reward(theta: float, alpha: float, weight: float = 0.8):
+    return weight * np.cosine(alpha) + (1.0 - weight) * np.cosine(theta)
+
+
+def exp_swing_up_reward(state, action: float, dt: float):
+    """
+    Adapted from
+    https://git.ias.informatik.tu-darmstadt.de/quanser/clients/-/blob/master/quanser_robots/qube/base.py
+
+    Args:
+        state:      Current state of the Qube-Servo 2 in shape (theta, alpha, theta_dot, alpha_dot)
+        action:     Last taken action
+        dt:         Time difference between two control steps (== 1.0 / frequency)
+
+    Returns:        Calculated reward
+    """
+    theta, alpha, theta_dot, alpha_dot = state
+    cost = alpha ** 2 + 5e-3 * alpha_dot ** 2 + 1e-1 * theta ** 2 + 2e-2 * theta_dot ** 2 + 3e-3 * action ** 2
+    if abs(theta) > (90.0 * np.pi / 180.0):
+        return -1
+    else:
+        return math.exp(-cost) #* dt
 
 
 def balance_reward(theta, alpha, target_angle):

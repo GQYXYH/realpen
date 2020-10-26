@@ -1,5 +1,6 @@
 """
-Wrapper for OpenAI Gym Reinforcement Learning environments
+Wrapper for OpenAI Gym Reinforcement Learning environments.
+Designed to work well with the Qube Servo-2 classes of this repositories.
 
 @Author: Moritz Schneider
 """
@@ -7,10 +8,11 @@ import typing as tp
 
 import cv2
 import numpy as np
-from gym import ObservationWrapper, Wrapper, spaces, Env
+from gym import Env, Wrapper, ObservationWrapper, spaces
 
 from gym_brt.control import calibrate
 from gym_brt.data.config.configuration import FREQUENCY
+from gym_brt.envs.reinforcementlearning_extensions.rl_reward_functions import exp_swing_up_reward
 
 Array = tp.Union[tp.List, np.ndarray]
 
@@ -18,46 +20,77 @@ Array = tp.Union[tp.List, np.ndarray]
 class ImageObservationWrapper(ObservationWrapper):
     """
     Wrapper to get an image from the environment and not a state.
-    Use env.render(rgb_array) as observation rather than the observation environment provides
+    Use env.render('rgb_array') as observation rather than the observation the environment provides.
     """
 
-    def __init__(self, env, out_shape=None):
+    def __init__(self, env: Env, out_shape: tp.Tuple = None) -> None:
+        """
+        Args:
+            env:        Gym environment to wrap around. Must be a simulation.
+            out_shape:  Output shape of the image observation. If None the rendered image will not be resized.
+        """
         super(ImageObservationWrapper, self).__init__(env)
-        dummy_obs = env.render("rgb_array")
+        dummy_obs = env.render("rgb_array", width=out_shape[0], height=out_shape[1])
         # Update observation space
         self.out_shape = out_shape
 
         obs_shape = out_shape if out_shape is not None else dummy_obs.shape
         self.observation_space = spaces.Box(low=0, high=255, shape=obs_shape, dtype=dummy_obs.dtype)
 
-    def observation(self, observation: np.ndarray):
-        img = self.env.render("rgb_array")
-        if self.out_shape is not None:
-            img = cv2.resize(img, (self.out_shape[0], self.out_shape[1]), interpolation=cv2.INTER_AREA)
-        # TODO: Resulting state as information?
+    def observation(self, observation: np.ndarray) -> np.ndarray:
+        img = self.env.render("rgb_array", width=self.out_shape[0], height=self.out_shape[0])
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        #if self.out_shape is not None:
+        #    img = cv2.resize(img, (self.out_shape[0], self.out_shape[1]), interpolation=cv2.INTER_AREA)
         return img
 
 
+def convert_single_state(state: Array) -> np.ndarray:
+    theta, alpha, theta_dot, alpha_dot = state
+
+    return np.array([np.cos(theta), np.sin(theta), np.cos(alpha), np.sin(alpha), theta_dot, alpha_dot],
+                    dtype=np.float64)
+
+
+def convert_states_array(states: Array) -> np.ndarray:
+    return np.concatenate((np.cos(states[:, 0:1]), np.sin(states[:, 0:1]), np.cos(states[:, 1:2]),
+                           np.sin(states[:, 1:2]), states[:, 2:3], states[:, 3:4], states[:, 4:]), axis=1)
+
+
 class TrigonometricObservationWrapper(ObservationWrapper):
+    
+    def __init__(self, env):
+        super(TrigonometricObservationWrapper, self).__init__(env)
+        obs_max = np.asarray([1, 1, 1, 1, np.inf, np.inf], dtype=np.float64)
+        self.observation_space = spaces.Box(-obs_max, obs_max, dtype=np.float32)
 
     def observation(self, observation: Array):
         """
-        With an observation of shape [theta, alpha, theta_dot, alpha_dot], this wrapper transform this
+        With an observation of shape [theta, alpha, theta_dot, alpha_dot], this wrapper transforms such an
         observation to [cos(theta), sin(theta), cos(alpha), sin(alpha), theta_dot, alpha_dot]
         """
-        assert len(observation) != 4, "Assumes a observation which is in shape [theta, alpha, theta_dot, alpha_dot]."
-
+        assert len(observation) != 4, "Assumes an observation which is in shape [theta, alpha, theta_dot, alpha_dot]."
         return convert_single_state(observation)
 
 
-def convert_single_state(state: Array):
-    theta, alpha, theta_dot, alpha_dot = state
+class ExponentialRewardWrapper(Wrapper):
+    """
+    Wrapper for an exponential reward of the Qube-Servo 2.
+    If the trigonometric version of the state (using the cosine and sine of theta and alpha) is used
+    """
 
-    return np.array([np.cos(theta), np.sin(theta), np.cos(alpha), np.sin(alpha), theta_dot, alpha_dot], dtype=np.float64)
+    def __init__(self, env: Env):
+        super().__init__(env)
+        self._dt = 1.0 / env.frequency
 
+    def reset(self, **kwargs):
+        return self.env.reset(**kwargs)
 
-def convert_states_array(states: Array):
-    return np.concatenate((np.cos(states[:, 0:1]), np.sin(states[:, 0:1]), np.cos(states[:, 1:2]), np.sin(states[:, 1:2]), states[:, 2:3], states[:, 3:4], states[:, 4:]), axis=1)
+    def step(self, action: float):
+        observation, _, done, info = self.env.step(action)
+        assert len(observation) == 4, "Assumes an observation which is in shape [theta, alpha, theta_dot, alpha_dot]."
+        reward = exp_swing_up_reward(observation, action, self._dt)
+        return observation, reward, done, info
 
 
 class CalibrationWrapper(Wrapper):
@@ -78,9 +111,9 @@ class CalibrationWrapper(Wrapper):
         self.limit_reset_threshold = np.inf if limit_reset_threshold is None else limit_reset_threshold
 
         if unit == 'deg':
-            self.noise_scale = 180./8
+            self.noise_scale = 180. / 8
         elif unit == 'rad':
-            self.noise_scale = np.pi/8
+            self.noise_scale = np.pi / 8
         else:
             self.noise_scale = 0.
 
@@ -103,4 +136,3 @@ class CalibrationWrapper(Wrapper):
 
         # Second reset to get the state and initialize correctly
         return self.env.reset(**kwargs)
-

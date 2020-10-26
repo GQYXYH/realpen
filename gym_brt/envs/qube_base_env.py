@@ -27,9 +27,11 @@ def normalize_angle(angle):
 class QubeBaseEnv(gym.Env):
     """A base class for all qube-based environments."""
 
-    def __init__(self, frequency=250, batch_size=2048, use_simulator=False, simulation_mode='ode', encoder_reset_steps=int(1e8),):
+    def __init__(self, frequency=250, batch_size=2048, use_simulator=False, simulation_mode='ode',
+                 integration_steps=10, encoder_reset_steps=int(1e8),):
         self.observation_space = spaces.Box(-OBS_MAX, OBS_MAX, dtype=np.float32)
         self.action_space = spaces.Box(-ACT_MAX, ACT_MAX, dtype=np.float32)
+        self.reward_range = (-float(0.), float(1.))
 
         self._frequency = frequency
         # Ensures that samples in episode are the same as batch size
@@ -48,7 +50,7 @@ class QubeBaseEnv(gym.Env):
             if simulation_mode == 'ode':
                 # TODO: Check assumption: ODE integration should be ~ once per ms
                 from gym_brt.quanser import QubeSimulator
-                integration_steps = int(np.ceil(1000 / self._frequency))
+                #integration_steps = int(np.ceil(1000 / self._frequency))
                 self.qube = QubeSimulator(
                     forward_model="ode",
                     frequency=self._frequency,
@@ -58,7 +60,7 @@ class QubeBaseEnv(gym.Env):
                 self._own_rendering = True
             elif simulation_mode == 'mujoco':
                 from gym_brt.envs.simulation.mujoco import QubeMujoco
-                integration_steps = int(np.ceil(1000 / self._frequency))#int(np.ceil(1000 / self._frequency))
+                #integration_steps = int(np.ceil(1000 / self._frequency))
                 self.qube = QubeMujoco(frequency=self._frequency,
                                        integration_steps=integration_steps,
                                        max_voltage=MAX_MOTOR_VOLTAGE,)  # TODO: Frequency
@@ -78,6 +80,10 @@ class QubeBaseEnv(gym.Env):
         self._viewer = None
 
         self._episode_reward = 0
+
+    @property
+    def frequency(self):
+        return self._frequency
 
     def __enter__(self):
         return self
@@ -169,7 +175,7 @@ class QubeBaseEnv(gym.Env):
 
         return state, reward, done, info
 
-    def render(self, mode="human"):
+    def render(self, mode="human", width=1024, height=1024):
         # TODO: Different modes
         if self._own_rendering:
             if self._viewer is None:
@@ -177,7 +183,7 @@ class QubeBaseEnv(gym.Env):
                     self._viewer = QubeRenderer(self._theta, self._alpha, self._frequency)
             return self._viewer.render(self._theta, self._alpha)
         else:
-            return self.qube.render(mode=mode)
+            return self.qube.render(mode=mode, width=width, height=height)
 
     def close(self, type=None, value=None, traceback=None):
         # Safely close the Qube (important on hardware)

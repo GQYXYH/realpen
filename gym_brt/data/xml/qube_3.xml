@@ -5,9 +5,6 @@
     <compiler angle="radian" meshdir="../meshes/"/>
     <option timestep="0.004" />
     <size njmax="500" nconmax="100" />
-    <visual>
-        <quality shadowsize="4096" />
-    </visual>
 
     <!-- Materials & Assets -->
     <asset>
@@ -17,7 +14,7 @@
         <!-- Textures -->
         <texture type="2d" name="texbody" builtin="flat" rgb1="0 0 0" width="1024" height="1024" />
         <texture type="2d" name="texfloor" builtin="flat" rgb1="1 1 1" width="1024" height="1024" />
-        <texture type="2d" name="texwall" builtin="flat" rgb1="1 1 1" width="1024" height="1024" />
+         <texture type="2d" name="texwall" builtin="flat" rgb1="1 1 1" width="1024" height="1024" />
         <texture type="2d" name="texred" builtin="flat" rgb1="0.721569 0.25098 0.235294" width="1024" height="1024" />
         <texture type="2d" name="texsilver" builtin="flat" rgb1="0.7529 0.7529 0.7529" width="512" height="512" />
 
@@ -73,14 +70,14 @@
                 <geom name="qube:motor:front" pos="0.000031 0.025329 0.00124" type="mesh" contype="0" conaffinity="0" condim="1" friction="0 0 0" material="bodyMat" mesh="qube0:motor:front" />
                 <geom name="qube:motor:part" pos="0 0.015289 -0.01559" type="mesh" contype="0" conaffinity="0" condim="1" friction="0 0 0" material="silverMat" mesh="qube0:motor:part" />
 
-                <joint axis="0 0 1" name="base_motor" range="-90 90" type="hinge" damping="0.0004975"/>
+                <joint axis="0 0 1" name="base_motor" range="-90 90" type="hinge" damping="0.0009999999999999998"/>
 
                 <!-- Rotary Arm -->
                 <body name="arm" pos="0 0.054882 0">
                     <inertial pos="0 0 0" mass="0.0069000000000000025" fullinertia="0.000002500 0.000000030 0.000002500 0.000000000 0.000000000 0.000000000" />
                     <geom name="qube:arm" pos="0 0 0" type="mesh" contype="0" conaffinity="0" condim="1" friction="0 0 0" material="silverMat" mesh="qube0:arm" />
 
-                    <joint axis="0 1 0" name="arm_pole" range="-90 90" type="hinge" damping="9.985e-05"/>
+                    <joint axis="0 1 0" name="arm_pole" range="-90 90" type="hinge" damping="8.8e-05"/>
 
                     <!-- Pole -->
                     <body name="pole" pos="0 0.030562 0">

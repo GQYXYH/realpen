@@ -1,9 +1,9 @@
 import numpy as np
-from gym_brt.envs import QubeBeginDownEnv
-
-from simmod.modification.mujoco import MujocoTextureModifier, MujocoMaterialModifier
-from simmod.wrappers import UDRMujocoWrapper
-from gym.wrappers import Monitor
+from gym_brt.envs import QubeBeginDownEnv, QubeSwingupEnv
+from gym_brt.control import QubeFlipUpControl
+import gym
+import cv2
+import time
 
 class ChangingAgent():
 
@@ -43,38 +43,58 @@ def set_init_from_ob(env, ob):
     env.set_state(pos, vel)
     return env._get_obs()
 
-env = QubeBeginDownEnv(frequency=100, use_simulator=True, simulation_mode='mujoco')
+
+class ImageObservationWrapper(gym.ObservationWrapper):
+    """
+    Use env.render(rgb_array) as observation
+    rather than the observation environment provides
+    """
+    def __init__(self, env, out_shape=None):
+        super(ImageObservationWrapper, self).__init__(env)
+        dummy_obs = env.render("rgb_array")
+        # Update observation space
+        self.out_shape = out_shape
+
+        obs_shape = out_shape if out_shape is not None else dummy_obs.shape
+        self.observation_space = gym.spaces.Box(low=0, high=255, shape=obs_shape, dtype=dummy_obs.dtype)
+
+    def observation(self, observation):
+        #img = self.env.render("rgb_array")#, width=self.out_shape[0], height=self.out_shape[1])
+        #img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        #if self.out_shape is not None:
+        #    img = cv2.resize(img, (self.out_shape[0], self.out_shape[1]), interpolation=cv2.INTER_AREA)
+        #cv2.imshow('image', img)
+        img = self.env.render("rgb_array", width=self.out_shape[0], height=self.out_shape[1])
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        #cv2.imshow('image2', img2)
+        #cv2.waitKey(0)
+        #cv2.destroyAllWindows()
+        return img
+
+IMAGE_SHAPE = (220, 220, 3)
+
+env = QubeSwingupEnv(frequency=100, use_simulator=True, simulation_mode='mujoco', integration_steps=1)
 env.reward_range = (-float('inf'), float('inf'))
 
-## Create the needed modifiers
-#tex_mod = MujocoTextureModifier(env.qube.sim)
-#mat_mod = MujocoMaterialModifier(env.qube.sim)
+control = QubeFlipUpControl(env, sample_freq=100)
 
-def video_callable(episode_id):
-    return True
 
 from gym import logger
 logger.set_level(10)
 
 env.metadata.update(env.qube.metadata)
-# Wrap the environment
-#env = UDRMujocoWrapper(env, tex_mod, mat_mod, sim=env.qube.sim)
-env = Monitor(env, directory="./monitor", video_callable=video_callable, force=True)
-
-
+env = ImageObservationWrapper(env, out_shape=IMAGE_SHAPE)
 obs = env.reset()
 
-#from PIL import Image
-#img = Image.fromarray(obs['pixels'], 'RGB')
-#img.show()
-
-for step in range(5):
-    action = 0
-    #if step % 10 == 0:
-    #    env.alg.step()
+start = time.time()
+for step in range(1000):
+    action = 0.1#control.action(obs)
     obs, reward, done, info = env.step(action)
     #env.render()
+    #print(step)
+    #env.render()
+end = time.time()
+print(end - start)
+#cv2.destroyAllWindows()
 
-    #img = Image.fromarray(obs['pixels'], 'RGB')
-    #img.show()
 
