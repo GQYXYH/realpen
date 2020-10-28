@@ -28,6 +28,11 @@ register(
     )
 
 register(
+    id='QubeSwingupEnv-v1',
+    entry_point='gym_brt.envs:QubeSwingupEnv',
+    )
+
+register(
     id='QubeBeginUpEnv-v1',
     entry_point='gym_brt.envs:QubeBeginUpEnv',
     )
