@@ -83,14 +83,14 @@ from gym import logger
 logger.set_level(10)
 
 env.metadata.update(env.qube.metadata)
-env = ImageObservationWrapper(env, out_shape=IMAGE_SHAPE)
+#env = ImageObservationWrapper(env, out_shape=IMAGE_SHAPE)
 obs = env.reset()
 
 start = time.time()
 for step in range(1000):
     action = 0.1#control.action(obs)
     obs, reward, done, info = env.step(action)
-    #env.render()
+    env.render()
     #print(step)
     #env.render()
 end = time.time()

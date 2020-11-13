@@ -30,27 +30,25 @@
     </asset>
 
     <worldbody>
-        <!-- Main light -->
-        <light name="light_main" pos="0 -0.44 0.39" diffuse=".8 .8 .8" dir="0 1 -0.75" directional="false" specular="0.9 0.9 0.9" castshadow="true" exponent="100"/>
-
         <!-- Top & side lights -->
-        <light name="light_top" pos="0 -0.03 0.5" diffuse=".8 .8 .8" dir="0 0 -1" directional="false" specular="0.9 0.9 0.9" castshadow="true"/>
-        <light name="light_right" pos="0.5 -0.03 0.5" diffuse=".6 .6 .6" dir="-1 0 -1" directional="false" specular="0.9 0.9 0.9" castshadow="true"/>
-        <light name="light_left" pos="-0.5 -0.03 0.5" diffuse=".6 .6 .6" dir="1 0 -1" directional="false" specular="0.9 0.9 0.9" castshadow="true"/>
+        <light name="light_top" pos="0 -0.03 0.5" diffuse=".8 .8 .8" dir="0 0 -1" directional="false" specular="0.9 0.9 0.9" castshadow="false"/>
+        <light name="light_right" pos="0.5 -0.03 0.5" diffuse=".6 .6 .6" dir="-1 0 -1" directional="false" specular="0.9 0.9 0.9" castshadow="false"/>
+        <light name="light_left" pos="-0.5 -0.03 0.5" diffuse=".6 .6 .6" dir="1 0 -1" directional="false" specular="0.9 0.9 0.9" castshadow="false"/>
         
         <!-- Camera -->
-        <!-- <camera name="blackfly" pos="0. -0.41 0.275" euler="1.25663706 0 0" fovy="45" /> -->
-        <camera name="blackfly" pos="0. -0.41 0.275" euler="1.167377293 0 0" fovy="35" />
+        <camera name="blackfly" pos="0. -0.415 0.275" euler="1.167377293 0 0" fovy="35" />
+        <!-- Main light -->
+        <light name="light_main" pos="0 -0.465 0.38" diffuse=".8 .8 .8" dir="0 1 -0.65" directional="false" specular="0.9 0.9 0.9" castshadow="true" exponent="100"/>
 
         <!-- Walls -->
-        <geom name="ground" pos="0 0 0" size="5 5 1" type="plane" material="floorMat"/>
-        <geom name="wall_back" pos="0 0.16 0" euler="1.570796327 0 0" size="3 3 1" type="plane" material="floorMat"/>
-        <geom name="wall_left" pos="-0.3 0 0" euler="0 1.570796327 0" size="3 3 1" type="plane" material="floorMat"/>
-        <geom name="wall_right" pos="0.3 0 0" euler="0 -1.570796327 0" size="3 3 1" type="plane" material="floorMat"/>
+        <geom name="ground" pos="0 0 0" size="0.5 0.5 1" type="plane" material="floorMat"/>
+        <geom name="wall_back" pos="0 0.16 0.165" euler="1.570796327 0 0" size="0.3 0.165 0.01" type="box" material="floorMat"/>
+        <geom name="wall_left" pos="-0.3 -0.09 0.165" euler="0 1.570796327 0" size="0.165 0.25 0.01" type="box" material="floorMat"/>
+        <geom name="wall_right" pos="0.3 -0.09 0.165" euler="0 -1.570796327 0" size="0.165 0.25 0.01" type="box" material="floorMat"/>
+        <geom name="platform" pos="0 0 0.005" euler="0 0 0" size="0.05 0.05 0.005" type="box" material="floorMat"/>
         
-
         <!-- Qube -->
-        <body name="base" pos="0 0 0" quat="0 0 0 1">
+        <body name="base" pos="0 0 0.005" quat="0 0 0 1">
             <inertial pos="0.000323 -0.00132 0.054992" mass="1.0" fullinertia="0.16666666667 0.16666666667 0.16666666667 0.000000000 0.000000000 0.000000000" />
             <geom name="qube0:base" pos="0.000323 -0.00132 0.054992" type="mesh" contype="0" conaffinity="0" condim="1" friction="0 0 0" material="bodyMat" mesh="qube0:base" />
             <geom name="qube0:base:screw:01" pos="0.009938 0.009932 0.10653" type="mesh" contype="0" conaffinity="0" condim="1" friction="0 0 0" material="silverMat" mesh="qube0:base:screw:01" />
