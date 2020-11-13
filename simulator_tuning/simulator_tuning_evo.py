@@ -587,7 +587,7 @@ if __name__ == '__main__':
     else:
         # Choose which mode should be run
         RUN_REAL = False
-        RUN_MUJ = False
+        RUN_MUJ = True
         RUN_ODE = True
 
         RENDER_MUJ = False

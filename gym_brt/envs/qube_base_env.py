@@ -85,6 +85,13 @@ class QubeBaseEnv(gym.Env):
     def frequency(self):
         return self._frequency
 
+    @property
+    def sim(self):
+        try:
+            return self.qube.sim
+        except AttributeError:
+            raise AttributeError(f"'{self.qube}' object has no attribute 'sim'")
+
     def __enter__(self):
         return self
 
