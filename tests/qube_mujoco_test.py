@@ -73,7 +73,7 @@ class ImageObservationWrapper(gym.ObservationWrapper):
 
 IMAGE_SHAPE = (220, 220, 3)
 
-env = QubeSwingupEnv(frequency=100, use_simulator=True, simulation_mode='mujoco', integration_steps=1)
+env = QubeSwingupEnv(frequency=100, use_simulator=False, simulation_mode='mujoco', integration_steps=1)
 env.reward_range = (-float('inf'), float('inf'))
 
 control = QubeFlipUpControl(env, sample_freq=100)
@@ -82,15 +82,17 @@ control = QubeFlipUpControl(env, sample_freq=100)
 from gym import logger
 logger.set_level(10)
 
-env.metadata.update(env.qube.metadata)
+#env.metadata.update(env.qube.metadata)
 #env = ImageObservationWrapper(env, out_shape=IMAGE_SHAPE)
 obs = env.reset()
+print(env.qube.state)
 
 start = time.time()
-for step in range(1000):
-    action = 0.1#control.action(obs)
+for step in range(10):
+    action = -5#control.action(obs)
     obs, reward, done, info = env.step(action)
-    env.render()
+    print(obs)
+    #env.render()
     #print(step)
     #env.render()
 end = time.time()
