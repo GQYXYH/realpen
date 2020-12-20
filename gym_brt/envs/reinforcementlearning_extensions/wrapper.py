@@ -62,7 +62,7 @@ class TrigonometricObservationWrapper(ObservationWrapper):
     def __init__(self, env):
         super(TrigonometricObservationWrapper, self).__init__(env)
         obs_max = np.asarray([1, 1, 1, 1, np.inf, np.inf], dtype=np.float64)
-        self.observation_space = spaces.Box(-obs_max, obs_max, dtype=np.float32)
+        self.observation_space = spaces.Box(-obs_max, obs_max, dtype=np.float64)
 
     def observation(self, observation: Array):
         """

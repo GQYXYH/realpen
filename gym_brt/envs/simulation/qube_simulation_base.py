@@ -13,7 +13,7 @@ class QubeSimulatorBase(object):
         self._integration_steps = integration_steps
         self._max_voltage = max_voltage
         self.state = (
-            np.array([0, 0, 0, 0], dtype=np.float64) + np.random.randn(4) * 0.01
+            np.array([0, 0, 0, 0], dtype=np.float64) #+ np.random.randn(4) * 0.01
         )
 
     def __enter__(self):

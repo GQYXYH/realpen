@@ -82,14 +82,20 @@ control = QubeFlipUpControl(env, sample_freq=100)
 from gym import logger
 logger.set_level(10)
 
-env.metadata.update(env.qube.metadata)
+#env.metadata.update(env.qube.metadata)
 #env = ImageObservationWrapper(env, out_shape=IMAGE_SHAPE)
 obs = env.reset()
 
+pos = np.asarray([-np.pi/4., 2./3*np.pi])
+vel = np.asarray([0, 0])
+env.qube.set_state(pos, vel)
+#env.qube.state = np.concatenate((pos, vel))
+print(env.qube.state)
 start = time.time()
-for step in range(1000):
-    action = 0.1#control.action(obs)
+for step in range(10):
+    action = 0#control.action(obs)
     obs, reward, done, info = env.step(action)
+    print(obs)
     env.render()
     #print(step)
     #env.render()
