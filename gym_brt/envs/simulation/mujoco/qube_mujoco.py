@@ -12,6 +12,9 @@ from gym_brt.envs.simulation.qube_simulation_base import QubeSimulatorBase
 XML_PATH = "qube.xml"
 
 
+def _normalize_angle(x: float) -> float:
+    return ((x + np.pi) % (2 * np.pi)) - np.pi
+
 class QubeMujoco(QubeSimulatorBase, MujocoBase):
     """Class for the Mujoco simulator."""
 
@@ -38,15 +41,10 @@ class QubeMujoco(QubeSimulatorBase, MujocoBase):
         theta_before, alpha_before = self.sim.data.qpos
         theta_dot, alpha_dot = self.sim.data.qvel
 
-        theta = self._normalize_angle(theta_before + np.pi)
-        alpha = self._normalize_angle(alpha_before + np.pi)
+        theta = _normalize_angle(theta_before)
+        alpha = _normalize_angle(alpha_before)
 
-        # alpha_dot *= -1
-
-        return -np.array([theta, alpha, theta_dot, alpha_dot])
-
-    def _normalize_angle(self, x: float) -> float:
-        return (x % (2 * np.pi)) - np.pi
+        return -np.array([theta, alpha, theta_dot, alpha_dot]) # TODO: Remove -1
 
     def gen_torque(self, action) -> float:
         # Motor
@@ -70,7 +68,7 @@ class QubeMujoco(QubeSimulatorBase, MujocoBase):
 
     def step(self, action: float, led=None) -> np.array:
         action = np.clip(action, -self._max_voltage, self._max_voltage)
-        action = -self.gen_torque(action)
+        action = -self.gen_torque(action) #TODO: Remove -1
         self.do_simulation(action)
         self.state = self._get_obs()
         return self.state
@@ -79,20 +77,20 @@ class QubeMujoco(QubeSimulatorBase, MujocoBase):
         MujocoBase.reset(self)
 
     def reset_model(self) -> np.ndarray:
-        qpos = self.init_qpos + self.np_random.uniform(size=self.model.nq, low=-0.01, high=0.01)
-        qvel = self.init_qvel + self.np_random.uniform(size=self.model.nv, low=-0.01, high=0.01)
+        qpos = self.init_qpos #+ self.np_random.uniform(size=self.model.nq, low=-0.01, high=0.01)
+        qvel = self.init_qvel #+ self.np_random.uniform(size=self.model.nv, low=-0.01, high=0.01)
         self.set_state(qpos, qvel)
         return self._get_obs()
 
     def reset_up(self) -> np.ndarray:
-        qpos = np.array([0, 0], dtype=np.float64) + self.np_random.uniform(size=self.model.nq, low=-0.01, high=0.01)
-        qvel = np.array([0, 0], dtype=np.float64) + self.np_random.uniform(size=self.model.nv, low=-0.01, high=0.01)
+        qpos = np.array([0, 0], dtype=np.float64) #+ self.np_random.uniform(size=self.model.nq, low=-0.01, high=0.01)
+        qvel = np.array([0, 0], dtype=np.float64) #+ self.np_random.uniform(size=self.model.nv, low=-0.01, high=0.01)
         self.set_state(qpos, qvel)
         return self._get_obs()
 
     def reset_down(self) -> np.ndarray:
-        qpos = np.array([0, np.pi], dtype=np.float64) + self.np_random.uniform(size=self.model.nq, low=-0.01, high=0.01)
-        qvel = np.array([0, 0], dtype=np.float64) + self.np_random.uniform(size=self.model.nv, low=-0.01, high=0.01)
+        qpos = np.array([0, np.pi], dtype=np.float64) #+ self.np_random.uniform(size=self.model.nq, low=-0.01, high=0.01) # + self.np_random.randn(2, dtype=np.float64) * 0.01
+        qvel = np.array([0, 0], dtype=np.float64) #+ self.np_random.uniform(size=self.model.nv, low=-0.01, high=0.01)
         self.set_state(qpos, qvel)
         return self._get_obs()
 

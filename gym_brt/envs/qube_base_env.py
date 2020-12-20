@@ -29,8 +29,8 @@ class QubeBaseEnv(gym.Env):
 
     def __init__(self, frequency=250, batch_size=2048, use_simulator=False, simulation_mode='ode',
                  integration_steps=10, encoder_reset_steps=int(1e8),):
-        self.observation_space = spaces.Box(-OBS_MAX, OBS_MAX, dtype=np.float32)
-        self.action_space = spaces.Box(-ACT_MAX, ACT_MAX, dtype=np.float32)
+        self.observation_space = spaces.Box(-OBS_MAX, OBS_MAX, dtype=np.float64)
+        self.action_space = spaces.Box(-ACT_MAX, ACT_MAX, dtype=np.float64)
         self.reward_range = (-float(0.), float(1.))
 
         self._frequency = frequency
@@ -47,27 +47,34 @@ class QubeBaseEnv(gym.Env):
 
         # Open the Qube
         if use_simulator:
-            if simulation_mode == 'ode':
+            if simulation_mode == 'ode' or simulation_mode == 'euler':
                 # TODO: Check assumption: ODE integration should be ~ once per ms
                 from gym_brt.quanser import QubeSimulator
                 #integration_steps = int(np.ceil(1000 / self._frequency))
                 self.qube = QubeSimulator(
-                    forward_model="ode",
+                    forward_model=simulation_mode,
                     frequency=self._frequency,
-                    integration_steps=integration_steps, # TODO: integration_steps != frame_skipping
+                    integration_steps=integration_steps,
                     max_voltage=MAX_MOTOR_VOLTAGE,
                 )
                 self._own_rendering = True
             elif simulation_mode == 'mujoco':
                 from gym_brt.envs.simulation.mujoco import QubeMujoco
                 #integration_steps = int(np.ceil(1000 / self._frequency))
-                self.qube = QubeMujoco(frequency=self._frequency,
-                                       integration_steps=integration_steps,
-                                       max_voltage=MAX_MOTOR_VOLTAGE,)  # TODO: Frequency
+                self.qube = QubeMujoco(
+                    frequency=self._frequency,
+                    integration_steps=integration_steps, # TODO: integration_steps != frame_skipping
+                    max_voltage=MAX_MOTOR_VOLTAGE,
+                )
                 self._own_rendering = False
             elif simulation_mode == 'bullet':
+                from gym_brt.envs.simulation.pybullet import QubeBullet
+                self.qube = QubeBullet(
+                    frequency=self._frequency,
+                    integration_steps=integration_steps,
+                    max_voltage=MAX_MOTOR_VOLTAGE,
+                )
                 self._own_rendering = False
-                raise NotImplementedError("Simulation with Bullet not implemented at this point.")
             else:
                 raise ValueError(f"Unsupported simulation type '{simulation_mode}'. "
                                  f"Valid ones are 'ode', 'mujoco' and 'bullet'.")

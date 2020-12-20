@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mujoco model="qube">
+    <compiler angle="radian" coordinate="local" meshdir="../meshes/" inertiafromgeom="auto"/>
+    <option gravity="0 0 -9.81" integrator="Euler"/>
+
+    <!-- Materials & Assets -->
+    <asset>
+        <!-- Assets -->
+        <include file="shared_assets.xml"/>
+
+        <!-- Textures -->
+        <texture type="2d" name="texbody" builtin="flat" rgb1="0 0 0" width="1024" height="1024" />
+        <texture type="2d" name="texfloor" builtin="flat" rgb1="1 1 1" width="1024" height="1024" />
+        <texture type="2d" name="texred" builtin="flat" rgb1="0.721569 0.25098 0.235294" width="1024" height="1024" />
+        <texture type="2d" name="texsilver" builtin="flat" rgb1="0.7529 0.7529 0.7529" width="512" height="512" />
+
+        <!-- Materials -->
+        <material name="floorMat" texture="texfloor" specular="1.0" shininess="0.1" />
+        <material name="bodyMat" texture="texbody" specular="0.75" shininess="0.3" />
+        <material name="redMat" texture="texred" specular="1.0" shininess="0.9" reflectance="1.0"/>
+        <material name="silverMat" texture="texsilver" specular="0.75" shininess="0.6" reflectance="1.0"/>
+    </asset>
+
+    <visual>
+        <global fovy="45" />
+    </visual>
+
+    <worldbody>
+        <light diffuse=".8 .8 .8" dir="0 0 -1" directional="false" pos="0.051036 -0.032181818 0.5" specular="0.9 0.9 0.9" castshadow="true"/>
+
+        <camera pos="-5 -5 15" name="view" euler="-30 0 -45"/>
+
+        <geom conaffinity="0" contype="0" name="ground" pos="0 0 0" size="5 5 1" type="plane" material="floorMat"/>
+
+
+        <!-- Qube -->
+        <body name="base" pos="0 0 0" quat="0 0 0 1">
+            <inertial pos="0.000323 -0.00132 0.054992" mass="1.0" fullinertia="0.16666666667 0.16666666667 0.16666666667 0.000000000 0.000000000 0.000000000" />
+            <geom name="qube0:base" pos="0.000323 -0.00132 0.054992" type="mesh" contype="0" conaffinity="0" condim="1" friction="0 0 0" material="bodyMat" mesh="qube0:base" />
+            <geom name="qube0:base:screw:01" pos="0.009938 0.009932 0.10653" type="mesh" contype="0" conaffinity="0" condim="1" friction="0 0 0" material="silverMat" mesh="qube0:base:screw:01" />
+            <geom name="qube0:base:screw:02" pos="0.009938 -0.009927 0.10653" type="mesh" contype="0" conaffinity="0" condim="1" friction="0 0 0" material="silverMat" mesh="qube0:base:screw:02" />
+            <geom name="qube0:base:screw:03" pos="-0.009938 0.009932 0.10653" type="mesh" contype="0" conaffinity="0" condim="1" friction="0 0 0" material="silverMat" mesh="qube0:base:screw:03" />
+            <geom name="qube0:base:screw:04" pos="-0.009938 -0.009931 0.10653" type="mesh" contype="0" conaffinity="0" condim="1" friction="0 0 0" material="silverMat" mesh="qube0:base:screw:04" />
+            <geom name="qube0:base:aux:female" pos="0 -0.026394 0.1078" type="mesh" contype="0" conaffinity="0" condim="1" friction="0 0 0" material="silverMat" mesh="qube0:base:aux:female" />
+
+
+            <body name="cable" pos="0 -0.002359 0.1667">
+                <!-- <geom name="qube:cable" type="mesh" contype="0" conaffinity="0" condim="1" friction="0 0 0" material="bodyMat" mesh="qube0:cable" /> -->
+                <geom name="qube:cable:aux:male" pos="0 -0.023859 -0.0447" type="mesh" contype="0" conaffinity="0" condim="1" friction="0 0 0" material="bodyMat" mesh="qube0:cable:aux:male" />
+            </body>
+
+            <body name="motor" pos="0 0 0.12672">
+                <inertial pos="0 0.008561 0.00125" mass="0.088967482" fullinertia="0.00001955483012 0.00000622772374 0.00001955483012 0.000000000 0.000000000 0.000000000" />
+                <geom name="qube:motor:main" pos="0 -0.000486 0.00135" type="mesh" contype="0" conaffinity="0" condim="1" friction="0 0 0" material="redMat" mesh="qube0:motor:main" />
+                <geom name="qube:motor:drive" pos="0.000009 -0.000053 -0.01472" type="mesh" contype="0" conaffinity="0" condim="1" friction="0 0 0" material="silverMat" mesh="qube0:motor:drive" />
+                <geom name="qube:motor:front" pos="0.000031 0.025329 0.00124" type="mesh" contype="0" conaffinity="0" condim="1" friction="0 0 0" material="bodyMat" mesh="qube0:motor:front" />
+                <geom name="qube:motor:part" pos="0 0.015289 -0.01559" type="mesh" contype="0" conaffinity="0" condim="1" friction="0 0 0" material="silverMat" mesh="qube0:motor:part" />
+
+                <joint axis="0 0 1" name="base_motor" range="-90 90" type="hinge" damping="3e-04"/>
+
+                <body name="arm" pos="0 0.054882 0">
+                    <inertial pos="0 0 0" mass="0.006032518" fullinertia="0.000002500 0.000000030 0.000002500 0.000000000 0.000000000 0.000000000" />
+                    <geom name="qube:arm" pos="0 0 0" type="mesh" contype="0" conaffinity="0" condim="1" friction="0 0 0" material="silverMat" mesh="qube0:arm" />
+
+                    <joint axis="0 1 0" name="arm_pole" range="-90 90" type="hinge" damping="3.5e-05"/>
+
+                    <body name="pole" pos="0 0.030562 0">
+                        <inertial pos="-0.000022 0 0.05851" mass="0.024" fullinertia="0.000031118 0.000031122 0.000000273 0.000000000 0.000000000 0.000000000" />
+                        <geom name="qube:pole" pos="-0.000022 0 0.05851" type="mesh" contype="0" conaffinity="0" condim="1" friction="0 0 0" material="redMat" mesh="qube0:pole" />
+                    </body> 
+                </body> 
+
+            </body>            
+        </body>
+
+        <body name="B0" pos="0 -0.026 0.15" quat="-0.7071067812 0 0.7071067812 0">
+            <composite type="rope" count="18 1 1" spacing="0.01" offset="0 0 2">
+                <!-- <joint kind="main"/> -->
+                <joint kind="twist" stiffness="1"/>
+                <geom type="capsule" size=".0015 .005"/>
+            </composite>
+        </body> 
+    </worldbody>
+
+    <actuator>
+        <velocity joint="base_motor" name="motor_rotation" ctrllimited="true" ctrlrange="-18 18" kv="0.0025"/>
+        <!-- <motor joint="base_motor" name="motor_rotation" ctrllimited="true" ctrlrange="-18 18"/> -->
+    </actuator>
+</mujoco>

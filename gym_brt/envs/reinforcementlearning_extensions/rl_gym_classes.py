@@ -27,7 +27,7 @@ OBS_MAX = np.asarray([1, 1, 1, 1, np.inf, np.inf], dtype=np.float64)
 class QubeBeginDownEnv(QubeSwingupEnv):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.observation_space = spaces.Box(-OBS_MAX, OBS_MAX, dtype=np.float32)
+        self.observation_space = spaces.Box(-OBS_MAX, OBS_MAX, dtype=np.float64)
 
     def _get_state(self):
         return np.array(

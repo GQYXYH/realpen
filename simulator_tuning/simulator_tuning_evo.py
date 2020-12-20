@@ -195,11 +195,11 @@ def run_mujoco(begin_up, policy, n_steps, frequency, integration_steps, params=N
 
         def set_init_from_ob(ob):
             pos = ob[:2]
-            pos[1] *= -1
+            #pos[1] *= -1
             vel = ob[2:]
-            vel[1] *= -1
+            #vel[1] *= -1
 
-            print(np.concatenate((pos, vel)))
+            #print(np.concatenate((pos, vel)))
 
             qube.set_state(pos, vel)
             return qube._get_obs()
@@ -211,6 +211,7 @@ def run_mujoco(begin_up, policy, n_steps, frequency, integration_steps, params=N
 
         if init_state is not None:
             s = set_init_from_ob(init_state)
+        print(s)
 
         if render:
             qube.render()
@@ -326,6 +327,7 @@ def plot_results(hists, labels, colors=None, normalize=None):
 def save(hist_path, hist_data, init_state_path, init_state):
     outfile = open(hist_path, "wb")
     pickle.dump(hist_data, outfile)
+    np.savetxt(f"{hist_path}.csv", hist_data, delimiter=",")
     outfile = open(init_state_path, "wb")
     pickle.dump(init_state, outfile)
 
@@ -418,9 +420,9 @@ def parameter_search():
 
             def set_init_from_ob(ob):
                 pos = ob[:2]
-                pos[1] *= -1
+                #pos[1] *= -1
                 vel = ob[2:]
-                vel[1] *= -1
+                #vel[1] *= -1
 
                 qube.set_state(pos, vel)
                 return qube._get_obs()
@@ -505,6 +507,7 @@ def visualize(plot_real_qube=False, plot_mujoco=False, plot_ode=False):
         if STATE_CONVERSION:
             hist_qube = convert_states_array(hist_qube)
         hists.append(hist_qube)
+        np.savetxt(f"./data/hist_qube_real.csv", hist_qube, delimiter=",")
         labels.append("Hardware")
 
     if plot_mujoco:
@@ -521,8 +524,8 @@ def visualize(plot_real_qube=False, plot_mujoco=False, plot_ode=False):
     # if plot_mujoco and plot_real_qube:
     #res = np.sqrt(np.mean((hist_qube[:, :-1] - hist_muj[:, :-1]) ** 2))
     #print("Mujoco: ", res)
-    res = np.sqrt(np.mean((hist_qube[:, :-1] - hist_ode[:, :-1]) ** 2))
-    print("ODE: ", res)
+    #res = np.sqrt(np.mean((hist_qube[:, :-1] - hist_ode[:, :-1]) ** 2))
+    #print("ODE: ", res)
 
     normalization = ['alpha'] if not STATE_CONVERSION else None
 
@@ -569,10 +572,10 @@ if __name__ == '__main__':
     FREQUENCY = 100
     run_time = 7.5  # in seconds
     N_STEPS = int(run_time * FREQUENCY)
-    I_STEPS = int(np.ceil(1000/FREQUENCY))  # Iteration steps
+    I_STEPS = 1#int(np.ceil(1000/FREQUENCY))  # Iteration steps
     plt.rcParams["figure.figsize"] = (20, 20)  # make graphs BIG
     POLICY = zero_policy
-    BEGIN_UP = False
+    BEGIN_UP = True
     STATE_CONVERSION = True
 
     PARAMETER_SEARCH = False
@@ -611,6 +614,7 @@ if __name__ == '__main__':
 
         POLICY = predefined_actions(traj[:, -1])
         print(f"Initialisation state for the simulations: \n {init}")
+        #print(convert_single_state(init))
         if RUN_MUJ:
             run_muj(init=init, render=RENDER_MUJ)
         if RUN_ODE:
