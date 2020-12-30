@@ -77,20 +77,20 @@ class QubeMujoco(QubeSimulatorBase, MujocoBase):
         MujocoBase.reset(self)
 
     def reset_model(self) -> np.ndarray:
-        qpos = self.init_qpos #+ self.np_random.uniform(size=self.model.nq, low=-0.01, high=0.01)
-        qvel = self.init_qvel #+ self.np_random.uniform(size=self.model.nv, low=-0.01, high=0.01)
+        qpos = self.init_qpos + self.np_random.uniform(size=self.model.nq, low=-0.01, high=0.01)
+        qvel = self.init_qvel + self.np_random.uniform(size=self.model.nv, low=-0.01, high=0.01)
         self.set_state(qpos, qvel)
         return self._get_obs()
 
     def reset_up(self) -> np.ndarray:
-        qpos = np.array([0, 0], dtype=np.float64) #+ self.np_random.uniform(size=self.model.nq, low=-0.01, high=0.01)
-        qvel = np.array([0, 0], dtype=np.float64) #+ self.np_random.uniform(size=self.model.nv, low=-0.01, high=0.01)
+        qpos = np.array([0, 0], dtype=np.float64) + self.np_random.uniform(size=self.model.nq, low=-0.01, high=0.01)
+        qvel = np.array([0, 0], dtype=np.float64) + self.np_random.uniform(size=self.model.nv, low=-0.01, high=0.01)
         self.set_state(qpos, qvel)
         return self._get_obs()
 
     def reset_down(self) -> np.ndarray:
-        qpos = np.array([0, np.pi], dtype=np.float64) #+ self.np_random.uniform(size=self.model.nq, low=-0.01, high=0.01) # + self.np_random.randn(2, dtype=np.float64) * 0.01
-        qvel = np.array([0, 0], dtype=np.float64) #+ self.np_random.uniform(size=self.model.nv, low=-0.01, high=0.01)
+        qpos = np.array([0, np.pi], dtype=np.float64) + self.np_random.uniform(size=self.model.nq, low=-0.01, high=0.01) # + self.np_random.randn(2, dtype=np.float64) * 0.01
+        qvel = np.array([0, 0], dtype=np.float64) + self.np_random.uniform(size=self.model.nv, low=-0.01, high=0.01)
         self.set_state(qpos, qvel)
         return self._get_obs()
 
