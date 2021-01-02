@@ -44,7 +44,7 @@ class QubeMujoco(QubeSimulatorBase, MujocoBase):
         theta = _normalize_angle(theta_before)
         alpha = _normalize_angle(alpha_before)
 
-        return -np.array([theta, alpha, theta_dot, alpha_dot]) # TODO: Remove -1
+        return np.array([theta, alpha, theta_dot, alpha_dot])
 
     def gen_torque(self, action) -> float:
         # Motor
@@ -68,7 +68,7 @@ class QubeMujoco(QubeSimulatorBase, MujocoBase):
 
     def step(self, action: float, led=None) -> np.array:
         action = np.clip(action, -self._max_voltage, self._max_voltage)
-        action = -self.gen_torque(action) #TODO: Remove -1
+        action = self.gen_torque(action)
         self.do_simulation(action)
         self.state = self._get_obs()
         return self.state
