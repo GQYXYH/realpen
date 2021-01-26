@@ -1,6 +1,8 @@
 """
 Reinforcement learning reward functions for the different tasks Balance, Swing Up and General. Simple rewards and
 energy based rewards can be found in the functions and need to be selected or modified.
+
+@Author: Steffen Bleher (adapted by Moritz Schneider)
 """
 import numpy as np
 import typing as tp

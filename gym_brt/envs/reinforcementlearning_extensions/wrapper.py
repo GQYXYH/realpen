@@ -1,6 +1,14 @@
 """
 Wrapper for OpenAI Gym Reinforcement Learning environments.
-Designed to work well with the Qube Servo-2 classes of this repositories.
+Designed to work well with the Qube-Servo 2 classes of this repository.
+
+Each wrapper can be used in the following way:
+
+```python
+with QubeSwingupEnv() as env:
+    env = WrapperClass(env)
+    ... (Normal steps like you would do without the wrapper or also additonal wrapping)
+```
 
 @Author: Moritz Schneider
 """
@@ -14,12 +22,17 @@ from gym_brt.control import calibrate
 from gym_brt.data.config.configuration import FREQUENCY
 from gym_brt.envs.reinforcementlearning_extensions.rl_reward_functions import exp_swing_up_reward
 
+try:
+    from gym_brt.quanser import QubeHardware
+except ImportError:
+    print("Warning: Can not import QubeHardware in wrapper.py")
+
 Array = tp.Union[tp.List, np.ndarray]
 
 
 class ImageObservationWrapper(ObservationWrapper):
-    """
-    Wrapper to get an image from the environment and not a state.
+    """Wrapper to get an image from the environment and not a state.
+
     Use env.render('rgb_array') as observation rather than the observation the environment provides.
     """
 
@@ -46,6 +59,10 @@ class ImageObservationWrapper(ObservationWrapper):
 
 
 def convert_single_state(state: Array) -> np.ndarray:
+    """Convert a single state in form of :math:`(\mathtt{theta}, \mathtt{\alpha}, \mathtt{theta_dot}, \mathtt{alpha_dot})`
+        to :math:`(cos(\mathtt{theta}), sin(\mathtt{theta}), cos(\mathtt{\alpha}), sin(\mathtt{\alpha}),
+        \mathtt{theta_dot}, \mathtt{alpha_dot})`
+    """
     theta, alpha, theta_dot, alpha_dot = state
 
     return np.array([np.cos(theta), np.sin(theta), np.cos(alpha), np.sin(alpha), theta_dot, alpha_dot],
@@ -53,6 +70,10 @@ def convert_single_state(state: Array) -> np.ndarray:
 
 
 def convert_states_array(states: Array) -> np.ndarray:
+    """ Converts an array of states in form :math:`(\mathtt{theta}, \mathtt{\alpha}, \mathtt{theta_dot},
+        \mathtt{alpha_dot})` to its extend form :math:`(cos(\mathtt{theta}), sin(\mathtt{theta}), cos(\mathtt{\alpha}),
+        sin(\mathtt{\alpha}), \mathtt{theta_dot}, \mathtt{alpha_dot})`
+    """
     return np.concatenate((np.cos(states[:, 0:1]), np.sin(states[:, 0:1]), np.cos(states[:, 1:2]),
                            np.sin(states[:, 1:2]), states[:, 2:3], states[:, 3:4], states[:, 4:]), axis=1)
 
@@ -65,22 +86,25 @@ class TrigonometricObservationWrapper(ObservationWrapper):
         self.observation_space = spaces.Box(-obs_max, obs_max, dtype=np.float64)
 
     def observation(self, observation: Array):
+        """ With an observation in form :math:`(\mathtt{\theta}, \mathtt{\alpha}, \mathtt{\dot{\theta}}, \mathtt{\dot{\alpha}})`,
+        this wrapper transforms every of such observation to :math:`(cos(\mathtt{\theta}), sin(\mathtt{\theta}),
+        cos(\mathtt{alpha}), sin(\mathtt{alpha}), \mathtt{\dot{theta}}, \mathtt{\dot{\alpha}})`
         """
-        With an observation of shape [theta, alpha, theta_dot, alpha_dot], this wrapper transforms such an
-        observation to [cos(theta), sin(theta), cos(alpha), sin(alpha), theta_dot, alpha_dot]
-        """
-        assert len(observation) == 4, "Assumes an observation which is in shape [theta, alpha, theta_dot, alpha_dot]."
+        assert len(observation) == 4, "Assumes an observation which is in form (theta, alpha, theta_dot, alpha_dot)."
         return convert_single_state(observation)
 
 
 class ExponentialRewardWrapper(Wrapper):
-    """
-    Wrapper for an exponential reward of the Qube-Servo 2.
-    If the trigonometric version of the state (using the cosine and sine of theta and alpha) is used
+    """ Wrapper for an exponential reward.
+
+    If the trigonometric version of the state (== cosine & sine of theta and alpha) is used, they must be converted to
+    shape :math:`(\mathtt{\theta}, \mathtt{\alpha}, \mathtt{\dot{theta}}, \mathtt{\dot{\alpha})` or the
+    conversion to the trigonometric shape must be done after the reward calcultion.
     """
 
     def __init__(self, env: Env):
         super().__init__(env)
+        assert env.frequency is not None
         self._dt = 1.0 / env.frequency
 
     def reset(self, **kwargs):
@@ -94,19 +118,39 @@ class ExponentialRewardWrapper(Wrapper):
 
 
 class CalibrationWrapper(Wrapper):
-    """Wrapper to calibrate the rotary arm of the Qube to a specific angle."""
+    """Wrapper to calibrate the rotary arm of the Qube to a specific angle.
+
+    The Qube gets calibrated to the desired theta value with a PID controller. For this the left and the right joint
+    limits are determined to calculate the correct value of the desired theta. Those limits which are used to calibrate
+    the Qube to the desired theta value are initialised at the first calibration step. We can force reinitialisation of
+    these limits via the argument `limit_reset_threshold`.
+
+    This wrapper only works for the hardware version of the  Qube. It does not effect the simulation instances.
+    """
 
     def __init__(self, env: Env, desired_theta: float = 0.0, frequency: int = None, u_max: float = 1.0,
-                 noise: bool = False, unit='deg', save_limits=True, limit_reset_threshold=None):
+                 noise: bool = False, unit='deg', limit_reset_threshold=None):
+        """Creates an wrapper for calibration.
+
+        Args:
+            env: OpenAI gym environment of the `real` Qube.
+            desired_theta: Value of :math:`\mathtt{\theta}` after calibration
+            frequency: Sample frequency; ff not specified it is derived from the given environment
+            u_max: Maximum applied voltage during calibration
+            noise: Additional noise added to the desired theta to incorporate random starts
+            unit: Unit of the the angle; either `deg` or `rad`
+            limit_reset_threshold: Force to reinitialize the limits after the specified timestep threshold
+        """
         super(CalibrationWrapper, self).__init__(env)
         self.frequency = FREQUENCY if frequency is None else frequency
         self.u_max = u_max
         self.desired_theta = desired_theta
         self.noise = noise
-        self.save_limits = save_limits
         self.limits = None
         self.counter = 0
         self.qube = self.unwrapped.qube
+
+        assert isinstance(self.qube, QubeHardware), "Only the hardware version of the Qube can be calibrated."
 
         self.limit_reset_threshold = np.inf if limit_reset_threshold is None else limit_reset_threshold
 
@@ -121,7 +165,7 @@ class CalibrationWrapper(Wrapper):
         # First reset the env to be sure the environment it is ready for calibration
         self.env.reset(**kwargs)
 
-        # Inject noise
+        # Inject a little bit of noise if desired
         theta = self.desired_theta + np.random.normal(scale=self.noise_scale) if self.noise else self.desired_theta
         print(f"Setting to {theta}")
 

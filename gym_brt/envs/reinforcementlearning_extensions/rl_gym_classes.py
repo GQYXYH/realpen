@@ -1,15 +1,17 @@
-"""
-Extension classes for the QubeEnv of the quanser driver. They work as an OpenAi Gym interface.
+"""Extension classes for the QubeEnv of the quanser driver. They work as an OpenAI Gym interface.
 
-These classes can be used to get consistent environments with the following state representation::
+These classes can be used to get more consistent environments with the following state representation:
 
-    [cos(params), sin(params), cos(alpha), sin(alpha), theta_dot, alpha_dot].
+    `[cos(params), sin(params), cos(alpha), sin(alpha), theta_dot, alpha_dot]`.
 
-The reward functions provided can be found in rl_reward_functions.py.
+The reward functions provided can be found in *[rl_reward_functions.py](./rl_reward_functions.py)*.
 
-These environments always needs to be used like::
+If the real Qube is used, these environments always needs to be used like:
 
-    with Environment() as env:
+```python
+with Environment() as env:
+    ...
+```
 
 to ensure safe closure of camera and qube!
 

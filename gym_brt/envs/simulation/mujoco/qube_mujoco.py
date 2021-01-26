@@ -1,6 +1,6 @@
 """Mujoco simulation for the Quanser QUBE-Servo 2.
 
-Author: Moritz Schneider
+@Author: Moritz Schneider
 """
 
 import numpy as np
@@ -15,17 +15,25 @@ XML_PATH = "qube.xml"
 def _normalize_angle(x: float) -> float:
     return ((x + np.pi) % (2 * np.pi)) - np.pi
 
+
 class QubeMujoco(QubeSimulatorBase, MujocoBase):
     """Class for the Mujoco simulator."""
 
     def __init__(self, frequency: float = 250, integration_steps: int = 1, max_voltage: float = 18.0):
-        self._dt = 1.0 / frequency  # TODO: PyBullet äquivalent
+        """Creates the Mujoco simulation of the Qube-Servo 2.
+
+        Args:
+            frequency: Frequency of the simulation
+            integration_steps: Number of integration steps tp be made during a single simulation step
+            max_voltage: Maximum voltage which can be applied
+        """
+        self._dt = 1.0 / frequency
         self._integration_steps = integration_steps
         self._max_voltage = max_voltage
 
-        self.Rm = 8.9 #8.999999999999996 #8.4 #8.899999999999997  # Resistance
-        self.kt = 0.035 #0.035 #0.042 #0.04200000000000001  # Current-torque (N-m/A)
-        self.km = 0.043 #0.04300000000000001 #0.04300000000000001 #0.035  # Back-emf constant (V-s/rad)
+        self.Rm = 8.9 #8.4  # Resistance
+        self.kt = 0.035 #0.035 #0.042 # Current-torque (N-m/A)
+        self.km = 0.043 #0.035 # Back-emf constant (V-s/rad)
 
         MujocoBase.__init__(self, XML_PATH, integration_steps)
         self.model.opt.timestep = self._dt
@@ -33,10 +41,10 @@ class QubeMujoco(QubeSimulatorBase, MujocoBase):
         self.state = self._get_obs()
 
     def _get_obs(self) -> np.ndarray:
-        """
-        qpos: params, alpha
-        qvel: theta_dot, alpha_dot
-        :return: Numpy array of the form: [params alpha theta_dot alpha_dot]
+        """Calculate normalized observations from the current simulation state.
+
+        Returns:
+            Numpy array of the form: [theta alpha theta_dot alpha_dot]
         """
         theta_before, alpha_before = self.sim.data.qpos
         theta_dot, alpha_dot = self.sim.data.qvel
@@ -47,9 +55,6 @@ class QubeMujoco(QubeSimulatorBase, MujocoBase):
         return -np.array([theta, alpha, theta_dot, alpha_dot]) # TODO: Remove -1
 
     def gen_torque(self, action) -> float:
-        # Motor
-        # Rotor inertia 4e-06
-
         _, _, theta_dot, _ = self._get_obs()
 
         tau = -(self.kt * (action - self.km * theta_dot)) / self.Rm  # torque
@@ -89,7 +94,7 @@ class QubeMujoco(QubeSimulatorBase, MujocoBase):
         return self._get_obs()
 
     def reset_down(self) -> np.ndarray:
-        qpos = np.array([0, np.pi], dtype=np.float64) #+ self.np_random.uniform(size=self.model.nq, low=-0.01, high=0.01) # + self.np_random.randn(2, dtype=np.float64) * 0.01
+        qpos = np.array([0, np.pi], dtype=np.float64) #+ self.np_random.uniform(size=self.model.nq, low=-0.01, high=0.01)
         qvel = np.array([0, 0], dtype=np.float64) #+ self.np_random.uniform(size=self.model.nv, low=-0.01, high=0.01)
         self.set_state(qpos, qvel)
         return self._get_obs()

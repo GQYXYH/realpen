@@ -61,12 +61,15 @@ setup(
     install_requires=[
         "numpy",
         "gym>=0.17",
-        "matplotlib"
+        "matplotlib",
+        "numba",
+        "vpython",
+        "scipy"
     ],
     setup_requires=["numpy"],
     extras_require=extras,
     ext_modules=extensions if is_hil_sdk_installed else None,
-    description="Adapted version of Blue River's OpenAI Gym wrapper around Quanser hardware.",
+    description="Extended and adapted version of Blue River's OpenAI Gym wrapper around Quanser hardware.",
     url="https://github.com/BlueRiverTech/quanser-openai-driver/",
     author="Blue River Technology, "
            "Intelligent Control Systems Group (Max Planck Institute for Intelligent Systems), "

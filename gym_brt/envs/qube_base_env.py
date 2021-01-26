@@ -1,3 +1,6 @@
+"""Code for
+
+"""
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import division
@@ -25,10 +28,52 @@ def normalize_angle(angle):
 
 
 class QubeBaseEnv(gym.Env):
-    """A base class for all qube-based environments."""
+    """Base class for all qube-based environments.
+
+    This base class cannot be instantiated since the methods `_reward` and `_isdone` are not defined in this base
+    code. For this a subclass like `QubeSwingupEnv` should be used.
+
+    The subclasses of this base class determine the starting point of the task (i.e. pole starts upwards), the end
+    points of the task (i.e. a specific angle threshold of the pole in the balance task) and also the reward
+    structure of the task.
+
+    Each of those subclasses holds a specific qube instantiation defined at `self.qube`. This qube instantiation
+    might be a instance of the hardware interface, the ODE simulation or the Mujoco simulation (PyBullet currently
+    not supported).
+    Every qube instantiation should implement the same methods to ensure a common behavior so that those classes are
+    interchangeable.
+
+    Each subclass of this base clase should be used with a `with` statement to ensure that the environment is
+    closed correctly:
+    ```python
+    import gym
+    from gym_brt.envs import QubeBeginDownEnv
+
+    with QubeSwingupEnv(use_simulator=False, frequency=250) as env:
+        controller = QubeFlipUpControl(sample_freq=frequency, env=env)
+        for episode in range(2):
+            state = env.reset()
+            for step in range(5000):
+                action = controller.action(state)
+                state, reward, done, info = env.step(action)
+    ```
+    Instead it can also be closed manually by using explicitly calling `env.close()`.
+    """
 
     def __init__(self, frequency=250, batch_size=2048, use_simulator=False, simulation_mode='ode',
                  integration_steps=10, encoder_reset_steps=int(1e8),):
+        """Starting point for the creation of new instances of a Qube (both simulation and hardware).
+
+        Args:
+            frequency: Sample frequency
+            batch_size: Number of timesteps of a single episode
+            use_simulator: Specifies if a simulator should be used instead of the hardware
+            simulation_mode: If `use_simulator=True` this specifies the used simulator; either `ode`, `mujoco` or
+                            `bullet`; does not affect the hardware classes
+            integration_steps: Number of integration steps of the simulation during a single timestep; does not affect
+                                the hardware classes
+            encoder_reset_steps: Number of timesteps to be done after the hardware encoders should be reinitialized
+        """
         self.observation_space = spaces.Box(-OBS_MAX, OBS_MAX, dtype=np.float64)
         self.action_space = spaces.Box(-ACT_MAX, ACT_MAX, dtype=np.float64)
         self.reward_range = (-float(0.), float(1.))
@@ -45,7 +90,7 @@ class QubeBaseEnv(gym.Env):
         self._theta, self._alpha, self._theta_dot, self._alpha_dot = 0, 0, 0, 0
         self._dtheta, self._dalpha = 0, 0
 
-        # Open the Qube
+        # Open the Qube: This means create the appropriate interface (simulation or hardware)
         if use_simulator:
             if simulation_mode == 'ode' or simulation_mode == 'euler':
                 # TODO: Check assumption: ODE integration should be ~ once per ms
@@ -63,7 +108,7 @@ class QubeBaseEnv(gym.Env):
                 #integration_steps = int(np.ceil(1000 / self._frequency))
                 self.qube = QubeMujoco(
                     frequency=self._frequency,
-                    integration_steps=integration_steps, # TODO: integration_steps != frame_skipping
+                    integration_steps=integration_steps,
                     max_voltage=MAX_MOTOR_VOLTAGE,
                 )
                 self._own_rendering = False
