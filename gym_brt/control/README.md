@@ -1,8 +1,8 @@
 # Control
 
-This directory includes simple control policies to swing-up and balance the Qube. Those can be used to test the Hardware (they might not be usable in simulation).
+This directory includes simple control policies to swing-up and balance the Qube. Those can be used to test the Hardware (some of them might not be usable in simulation or does not reach the intended behavior).
 
-Furthermore this folder contains calibration methods and classes in `calibration.py` to reset the hardware-based qube to specific starting points. A wrapper version of this can be found in [`gym_brt/envs/reinforcementlearning_extensions/wrapper.py`](../envs/reinforcementlearning_extensions/wrapper.py).
+Furthermore this folder contains calibration methods and classes in `calibration.py` to reset the hardware-based Qube to specific starting points. A wrapper version of this can be found in [`gym_brt/envs/reinforcementlearning_extensions/wrapper.py`](../envs/reinforcementlearning_extensions/wrapper.py).
 
 ## Controllers
 

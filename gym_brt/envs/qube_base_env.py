@@ -1,5 +1,9 @@
-"""Code for
+"""Base code for all OpenAI Gym environments of the Qube.
 
+This base class defines the general behavior and variables of all Qube environments.
+
+Furthermore, this class defines if a simulation or the hardware version of the Qube should be used by initialising the
+specific corresponding Qube class at the variable `qube`.
 """
 from __future__ import absolute_import
 from __future__ import print_function
@@ -43,7 +47,7 @@ class QubeBaseEnv(gym.Env):
     Every qube instantiation should implement the same methods to ensure a common behavior so that those classes are
     interchangeable.
 
-    Each subclass of this base clase should be used with a `with` statement to ensure that the environment is
+    Each subclass of this base class should be used with a `with` statement to ensure that the environment is
     closed correctly:
     ```python
     import gym
@@ -57,7 +61,7 @@ class QubeBaseEnv(gym.Env):
                 action = controller.action(state)
                 state, reward, done, info = env.step(action)
     ```
-    Instead it can also be closed manually by using explicitly calling `env.close()`.
+    Instead it can also be closed manually by using explicitly calling `env.close()` inside a try-finally statement.
     """
 
     def __init__(self, frequency=250, batch_size=2048, use_simulator=False, simulation_mode='ode',
