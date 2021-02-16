@@ -7,18 +7,18 @@ The *Qube-Servo 2* can be connected to the computer via USB, the Power LED shoul
 The original power cables are not optimal as the pendulum may get caught in the plug when falling down. Especially when running long learning experiments on the hardware this may be annoying. An easy way around this is to get an angle plug from an electronics supply store (at MPI Stuttgart) and solder it onto the power cable.
 
 ## Setup and Use of a Python Interface for the Quanser Qube Servo 2
-The *Qube-Servo 2* is a furuta pendulum and can be used for various control and learning tasks. One way of communicating with the device is through a Python Interface. Quanser itself does not support a Python interface but Blue River Tech provides one on their [GitHub repository](https://github.com/BlueRiverTech/quanser-openai-driver). This repository is an extension to the development of Blue River Tech. The interface uses the HIL SDK from Quanser and provides an OpenAI Gym like API to communicate with the Qube Servo 2. Furthermore it comes with various implemented controllers. To start with this repository it is recommended to start with the [Blue River Tech repository]((https://github.com/BlueRiverTech/quanser-openai-driver)) and their corresponding [whitepaper](https://arxiv.org/abs/2001.02254) to get an overview of the implemented code.
+The *Qube-Servo 2* is a furuta pendulum and can be used for various control and learning tasks. One way of communicating with the device is through a Python Interface. Quanser itself does not support a Python interface but Blue River Tech provides one on their [GitHub repository](https://github.com/BlueRiverTech/quanser-openai-driver). This repository is an extension to the development of Blue River Tech. The interface uses the HIL SDK from Quanser and provides an OpenAI Gym like API to communicate with the Qube Servo 2. Furthermore it comes with various implemented controllers and simulations (more of those below). To start with this repository it is recommended to start with the [Blue River Tech repository]((https://github.com/BlueRiverTech/quanser-openai-driver)) and their corresponding [whitepaper](https://arxiv.org/abs/2001.02254) to get an overview of the implemented code.
 
 ### Software Setup.
-The setup is described in the Blue River Techs GitHub repository and definitely works in Python 3.6.7. Both repositories, the one on GitHub and this one have working ODE simulators but they are different. Both ODE simulation types seem to represent the dynamics of the pendulum and finding a better simulator is a matter of parameter tuning. More on the internal simulator can be found below. 
+The setup is described in the Blue River Techs GitHub repository and definitely works in Python 3.6.7. Both repositories, the one on GitHub and this one have working ODE simulators but they are different. Both ODE simulation types seem to represent the dynamics of the pendulum and finding a better simulator is a matter of parameter tuning. In addition, this repository includes a new Mujoco simulation. More on the internal simulators can be found below. 
 
-It is recommended to use [conda](https://anaconda.org) as environment and repository management.
+It is recommended to use [conda](https://anaconda.org) as environment and repository management tool.
 
 The naming conventions in the BlueRiverTech repository contradict the ones in their documentation. The naming conventions described here work for the internal repository and are consistent. The GitHub repository is still under development and other useful tools and classes might be available sometime later.
 
 ### Prerequisites
 #### Driver installation: HIL SDK from Quanser [Hardware only]
-If the hardware version should be used, the HIL SDK from Quanser must be installed. At the moment, the hardware version of this repository only works on machines with Linux.
+If the **hardware version** should be used, the HIL SDK from Quanser must be installed. At the moment, the hardware version of this repository only works on machines with Linux.
 A mirror is available at https://github.com/quanser/hil_sdk_linux_x86_64. Follow the instructions there. If you are using a virtual environment (i.e. conda or virtualenv), it is best to install the driver outside even if the installation should not affect the virtual environment directly.
 
 You also must have _pip_ installed (in most cases conda did this already for you so this step might not be needed if conda is used):
@@ -40,7 +40,7 @@ If the needed packages are not installed automatically via `setup.py`, install t
 $ pip install numpy scipy gym matplotlib numba vpython
 ```
 
-> **Instructions for using Mujoco:** If the Mujoco simulator should be used, the last installation command changes to `$ pip3 install -e . [mujoco]`. [Mujoco](http://www.mujoco.org/index.html) itself should be installed separately and before the installation of this repository since the [mujoco-py](https://github.com/openai/mujoco-py) package relies on an existing installation of Mujoco.
+> **Instructions for using Mujoco:** If the Mujoco simulator should be used, the last installation command changes to `$ pip3 install -e . [mujoco]`. [Mujoco](http://www.mujoco.org/index.html) itself should be installed separately and before the installation of this repository since the [mujoco-py](https://github.com/openai/mujoco-py) package relies on an existing installation of Mujoco. Furthermore, [mujoco-py](https://github.com/openai/mujoco-py) only works on Linux and MacOS operating systems.
 
 If the command `pip` is not available try to use `pip3` instead.
 
@@ -51,11 +51,11 @@ Once you have that setup: Run `example_code.py` (ensure the *Qube* is connected 
 $ python example_code.py
 ```
 
-If errors occur while using the hardware can be solved by unplugging the device or restarting the computer.
+While using the hardware errors can occurs which often can be solved by unplugging the device or restarting the computer.
 
 ### Usage
 #### OpenAI Gym interface
-Usage is very similar to most OpenAI gym environments. Especially if you use the hardware classes it requires that you close the environment when finished (See WARNING). This can be done with a context manager using a `with` statement:
+Usage is very similar to most [OpenAI Gym](https://github.com/openai/gym) environments. Important and different to normal OpenAI Gym is that if you use the hardware classes it requires that you close the environment when finished (See WARNING). This can be done with context managers using a `with` statement:
 ```python
 import gym
 from gym_brt.envs import QubeSwingupEnv
@@ -85,9 +85,9 @@ The most common case when the env was not properly closed: you can not reopen th
 
 The normal `QubeBaseEnv` should not be initialised solely. There exist multiple subclasses like `QubeSwingupEnv` and `QubeBalanceEnv` that implement specific control problems and their corresponding observation types. Furthermore, this repository contains multiple extensions (wrapper, more subclasses, etc. to change observation type, reward functions and more) which can be found in the directory [gym_brt/envs/reinforcementlearning_extensions](./gym_brt/envs/reinforcementlearning_extensions).
 
-It is recommended to use the `QubeSwingupEnv` or its subclasses since the encoder values of the environment are set to 0 at the beginning which means that either the pendulum in its initial condition is interpreted as a angle of $`\pi`$ or 0 respectively. Therefore, inaccuracy in the initial conditions lead to wrong states in the environment. Especially the simulator is just tested for the `QubeSwingupEnv`.
+It is recommended to use the `QubeSwingupEnv` or its subclasses since the encoder values of the environment are set to 0 at the beginning which means that either the pendulum in its initial condition is interpreted as a angle of $\pi$ or $0$ respectively. Therefore, inaccuracy in the initial conditions lead to wrong states in the environment. Especially the simulators are just tested for the `QubeSwingupEnv`.
 
-Interacting with the pendulum or simulator is identical. The state contains information about the angles of the pendulum alpha and of the rotary arm theta. They can be accessed as following:
+Interacting with the real pendulum or a simulator is nearly identical. The state contains information about the angles of the pendulum alpha and of the rotary arm theta. They can be accessed as following:
 ```python
 theta, alpha, theta_dot, alpha_dot = state
 ```
