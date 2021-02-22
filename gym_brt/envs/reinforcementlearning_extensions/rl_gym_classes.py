@@ -1,15 +1,17 @@
-"""
-Extension classes for the QubeEnv of the quanser driver. They work as an OpenAi Gym interface.
+"""Extension classes for the QubeEnv of the quanser driver. They work as an OpenAI Gym interface.
 
-These classes can be used to get consistent environments with the following state representation::
+These classes can be used to get more consistent environments with the following state representation:
 
-    [cos(params), sin(params), cos(alpha), sin(alpha), theta_dot, alpha_dot].
+    `[cos(params), sin(params), cos(alpha), sin(alpha), theta_dot, alpha_dot]`.
 
-The reward functions provided can be found in rl_reward_functions.py.
+The reward functions provided can be found in *[rl_reward_functions.py](./rl_reward_functions.py)*.
 
-These environments always needs to be used like::
+If the real Qube is used, these environments always needs to be used like:
 
-    with Environment() as env:
+```python
+with Environment() as env:
+    ...
+```
 
 to ensure safe closure of camera and qube!
 
@@ -27,7 +29,7 @@ OBS_MAX = np.asarray([1, 1, 1, 1, np.inf, np.inf], dtype=np.float64)
 class QubeBeginDownEnv(QubeSwingupEnv):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.observation_space = spaces.Box(-OBS_MAX, OBS_MAX, dtype=np.float32)
+        self.observation_space = spaces.Box(-OBS_MAX, OBS_MAX, dtype=np.float64)
 
     def _get_state(self):
         return np.array(

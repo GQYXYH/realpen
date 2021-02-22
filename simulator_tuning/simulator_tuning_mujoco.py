@@ -2,6 +2,9 @@
 Simulator tuning with Ray Tune for the Mujoco and the PyBullet Environment.
 Nevergrad, Scikit, etc. usable via the interface of Tune.
 
+Visit https://docs.ray.io/en/master/tune/index.html for more information
+on Ray Tune.
+
 Author: Moritz Schneider
 """
 
@@ -16,9 +19,6 @@ from gym_brt.control.control import _convert_state
 from gym_brt.quanser import QubeHardware, QubeSimulator
 from gym_brt.quanser.qube_interfaces import forward_model_ode
 from gym_brt.envs.reinforcementlearning_extensions import TrigonometricObservationWrapper, convert_single_state, convert_states_array
-
-
-# from simulator_tuning.qube_simulator_optimize import forward_model_ode_optimize
 
 
 # No input
@@ -137,6 +137,7 @@ def square_wave_flip_and_hold_policy(state, **kwargs):
         action = square_wave_policy(state, **kwargs)
     return action
 
+
 # Returns a policy which gives out the given predefined actions
 def predefined_actions(actions):
     actions = actions
@@ -146,6 +147,7 @@ def predefined_actions(actions):
         return [actions[step]]
     
     return policy
+
 
 def convert_states(states, init):
 
@@ -195,11 +197,7 @@ def run_mujoco(begin_up, policy, n_steps, frequency, integration_steps, params=N
 
         def set_init_from_ob(ob):
             pos = ob[:2]
-            pos[1] *= -1
             vel = ob[2:]
-            vel[1] *= -1
-
-            print(np.concatenate((pos, vel)))
 
             qube.set_state(pos, vel)
             return qube._get_obs()
@@ -211,6 +209,7 @@ def run_mujoco(begin_up, policy, n_steps, frequency, integration_steps, params=N
 
         if init_state is not None:
             s = set_init_from_ob(init_state)
+        print(s)
 
         if render:
             qube.render()
@@ -326,6 +325,7 @@ def plot_results(hists, labels, colors=None, normalize=None):
 def save(hist_path, hist_data, init_state_path, init_state):
     outfile = open(hist_path, "wb")
     pickle.dump(hist_data, outfile)
+    np.savetxt(f"{hist_path}.csv", hist_data, delimiter=",")
     outfile = open(init_state_path, "wb")
     pickle.dump(init_state, outfile)
 
@@ -374,7 +374,7 @@ def run_ode(params=None, init=None, render=False):
 
 
 def parameter_search():
-    """Performing parameter search for the Mujoco simulation to close the Sim2Real gap.
+    """Performing parameter search with Ray RTune for the Mujoco simulation to close the Sim2Real gap.
 
     Returns:
         The optimized parameters for the simulation.
@@ -386,7 +386,7 @@ def parameter_search():
     from simulator_tuning.algorithms import coordinate_descent
 
     real, INIT_STATE = load("./data/hist_qube_real", "./data/init_state_real")
-    provided_actions=True
+    provided_actions = True
 
     # Evaluation function to measure the error for coordinate descent
     def evaluation_function(config, checkpoint_dir=None):
@@ -418,9 +418,7 @@ def parameter_search():
 
             def set_init_from_ob(ob):
                 pos = ob[:2]
-                pos[1] *= -1
                 vel = ob[2:]
-                vel[1] *= -1
 
                 qube.set_state(pos, vel)
                 return qube._get_obs()
@@ -433,7 +431,7 @@ def parameter_search():
             if init_state is not None:
                 s = set_init_from_ob(init_state)
 
-            a = actions[0] #if provided_actions else policy(s, step=0)
+            a = actions[0] if provided_actions else policy(s, step=0)
             s_hist = [s if not STATE_CONVERSION else convert_single_state(s)]
             a_hist = [[a]]
 
@@ -445,7 +443,7 @@ def parameter_search():
                     tune.report(error=error)
                     return error
 
-                a = actions[i + 1] #if provided_actions else policy(s, step=i + 1, frequency=frequency)
+                a = actions[i + 1] if provided_actions else policy(s, step=i + 1, frequency=frequency)
 
                 s_hist.append(s if not STATE_CONVERSION else convert_single_state(s))  # States
                 a_hist.append([a])  # Actions
@@ -456,13 +454,12 @@ def parameter_search():
 
         converted_real = convert_states_array(real)
 
-        #error = np.sqrt(np.mean((pred[:, :-1] - real[:, :-1]) ** 2))
         # Calculate the error excluding the actions
         error = np.sqrt(np.mean((pred[:, :-1] - converted_real[:, :-1]) ** 2))
         tune.report(error=error)
         return error
 
-    # Inital parameters for coordinate descent
+    # Initial parameters of the Mujoco simulation for coordinate descent
     init_params = {
         "damping_arm_pole": 3.5e-05,
         "damping_base_motor": 3e-04,
@@ -505,6 +502,7 @@ def visualize(plot_real_qube=False, plot_mujoco=False, plot_ode=False):
         if STATE_CONVERSION:
             hist_qube = convert_states_array(hist_qube)
         hists.append(hist_qube)
+        np.savetxt(f"./data/hist_qube_real.csv", hist_qube, delimiter=",")
         labels.append("Hardware")
 
     if plot_mujoco:
@@ -521,8 +519,8 @@ def visualize(plot_real_qube=False, plot_mujoco=False, plot_ode=False):
     # if plot_mujoco and plot_real_qube:
     #res = np.sqrt(np.mean((hist_qube[:, :-1] - hist_muj[:, :-1]) ** 2))
     #print("Mujoco: ", res)
-    res = np.sqrt(np.mean((hist_qube[:, :-1] - hist_ode[:, :-1]) ** 2))
-    print("ODE: ", res)
+    #res = np.sqrt(np.mean((hist_qube[:, :-1] - hist_ode[:, :-1]) ** 2))
+    #print("ODE: ", res)
 
     normalization = ['alpha'] if not STATE_CONVERSION else None
 
@@ -569,14 +567,14 @@ if __name__ == '__main__':
     FREQUENCY = 100
     run_time = 7.5  # in seconds
     N_STEPS = int(run_time * FREQUENCY)
-    I_STEPS = int(np.ceil(1000/FREQUENCY))  # Iteration steps
+    I_STEPS = 1  # Iterations
     plt.rcParams["figure.figsize"] = (20, 20)  # make graphs BIG
-    POLICY = zero_policy
-    BEGIN_UP = False
-    STATE_CONVERSION = True
+    POLICY = zero_policy # Control policy to use
+    BEGIN_UP = True  # Begin with pole facing upwards or downwards
+    STATE_CONVERSION = True  # Convert the states from four to six dimensional state space
 
-    PARAMETER_SEARCH = False
-    TRAJ_RECORDING = False
+    PARAMETER_SEARCH = False  # Do the actual simulator tuning; ATTENTION: Long and performance-heavy
+    TRAJ_RECORDING = False  # Record a new trajectory on the real Qube
 
     if PARAMETER_SEARCH:
         rec = parameter_search()
@@ -590,6 +588,7 @@ if __name__ == '__main__':
         RUN_MUJ = True
         RUN_ODE = True
 
+        # Choose if Mujoco and/or the ODE simulation should be rendered
         RENDER_MUJ = False
         RENDER_ODE = False
 

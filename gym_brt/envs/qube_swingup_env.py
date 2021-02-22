@@ -1,12 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import division
-
-import numpy as np
-from gym import spaces
-from gym_brt.envs.qube_base_env import QubeBaseEnv
-from gym_brt.envs import swing_up_reward
-
 """
     Description:
         A pendulum is attached to an un-actuated joint to a horizontal arm,
@@ -43,6 +34,15 @@ from gym_brt.envs import swing_up_reward
     Episode Termination:
         When params is greater than ±90° or after 2048 steps
 """
+
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
+
+import numpy as np
+from gym import spaces
+from gym_brt.envs.qube_base_env import QubeBaseEnv
+from gym_brt.envs import swing_up_reward
 
 
 class QubeSwingupEnv(QubeBaseEnv):

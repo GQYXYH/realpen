@@ -3,10 +3,11 @@
 This file was adapted from the following implementation:
 https://github.com/openai/gym/blob/master/gym/envs/mujoco/mujoco_env.py
 
-The main difference between both files is, that this class does not inherit from the main environment class of OpenAI
-Gym. This was done to avoid complications since the base class of the QUBE already inherits from the environment class.
+The main difference between both files is that this class does not inherit from the main environment class `gym.Env` of
+OpenAI Gym. This was done to avoid complications since the base class `QubeBaseEnv` of the Qube already inherits
+from `gym.Env`.
 
-Author: Moritz Schneider
+@Author: Moritz Schneider
 """
 
 import os
@@ -44,9 +45,15 @@ def convert_observation_to_space(observation):
 
 
 class MujocoBase(object):
-    """Superclass for all MuJoCo environments."""
+    """Superclass for all MuJoCo environments independent of an OpenAI Gym Env."""
 
     def __init__(self, model_path, n_substeps=1):
+        """Creates the simulation.
+
+        Args:
+            model_path: Path of the Mujoco XML file
+            n_substeps: Number of single steps to be made during a single control step (== integration steps)
+        """
         if model_path.startswith("/") or model_path.startswith("../"):
             fullpath = model_path
         else:

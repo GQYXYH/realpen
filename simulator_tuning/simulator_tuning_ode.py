@@ -1,3 +1,8 @@
+"""
+Tuning the parameters of the ODE simulation to match the dynamics of the real Qube.
+
+@Author: Steffen Bleher
+"""
 import functools
 
 import matplotlib.pyplot as plt

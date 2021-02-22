@@ -103,10 +103,10 @@ class RandomControl(Control):
 
 
 class QubeFlipUpControl(Control):
-    '''Classical controller to hold the pendulum upright whenever the
+    """Classical controller to hold the pendulum upright whenever the
     angle is within 20 degrees, and flips up the pendulum whenever
     outside 20 degrees.
-    '''
+    """
 
     start = True
 
@@ -219,10 +219,10 @@ class QubeFlipUpControl(Control):
 
 
 class QubeHoldControl(QubeFlipUpControl):
-    '''Classical controller to hold the pendulum upright whenever the
+    """Classical controller to hold the pendulum upright whenever the
     angle is within 20 degrees. (Same as QubeFlipUpControl but without a
     flip up action)
-    '''
+    """
 
     def __init__(self, env, sample_freq=1000, **kwargs):
         super(QubeHoldControl, self).__init__(
