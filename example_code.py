@@ -12,12 +12,12 @@ import gym_brt.data.config.configuration as config
 import time
 
 
-def interact_with_down_environment(n_trials: int = 1, frequency: int = config.FREQUENCY):
+def interact_with_down_environment(n_trials: int = 1, frequency: int = 120):
     assert n_trials >= 1
     #calibrate(desired_theta=0.0)
     ret = 0
 
-    with QubeSwingupEnv(frequency=frequency, use_simulator=True) as env:
+    with QubeSwingupEnv(frequency=frequency, use_simulator=False) as env:
         controller = QubeFlipUpControl(sample_freq=frequency)
         for episode in range(n_trials):
             state = env.reset()
@@ -27,8 +27,6 @@ def interact_with_down_environment(n_trials: int = 1, frequency: int = config.FR
                 ret += reward
                 if done:
                     break
-        print(step)
-        print(ret)
 
 
 
