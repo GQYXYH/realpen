@@ -3,8 +3,8 @@ The **[Quanser Qube-Servo 2](https://www.quanser.com/products/qube-servo-2/)** i
 In order to not damage the hardware limitations on voltage and safety mechanisms have to be implemented in software.
 
 ## Hardware Setup
-The *Qube-Servo 2* can be connected to the computer via USB, the Power LED should be green and the USB LED should be red. The driver will be installed automatically, the USB LED will turn to green if successful. If a driver is already installed it is recommended to uninstall it before connecting the device, some communication errors between the hardware and Python can be avoided.
-The original power cables are not optimal as the pendulum may get caught in the plug when falling down. Especially when running long learning experiments on the hardware this may be annoying. An easy way around this is to get an angle plug from an electronics supply store (at MPI Stuttgart) and solder it onto the power cable.
+
+Instructions for a standardized lab environemnt for vision-based experiments on the Furuta Pendulum can be found [here](./hardware_setup/instructions.md).
 
 ## Setup and Use of a Python Interface for the Quanser Qube Servo 2
 The *Qube-Servo 2* is a furuta pendulum and can be used for various control and learning tasks. One way of communicating with the device is through a Python Interface. Quanser itself does not support a Python interface but Blue River Tech provides one on their [GitHub repository](https://github.com/BlueRiverTech/quanser-openai-driver). This repository is an extension to the development of Blue River Tech. The interface uses the HIL SDK from Quanser and provides an OpenAI Gym like API to communicate with the Qube Servo 2. Furthermore it comes with various implemented controllers and simulations (more of those below). To start with this repository it is recommended to start with the [Blue River Tech repository]((https://github.com/BlueRiverTech/quanser-openai-driver)) and their corresponding [whitepaper](https://arxiv.org/abs/2001.02254) to get an overview of the implemented code.
