@@ -1,4 +1,4 @@
-# Quanser Qube-Servo 2
+# Quanser Qube-Servo 2 (with Vision Input)
 The **[Quanser Qube-Servo 2](https://www.quanser.com/products/qube-servo-2/)** is a one input system that can be used to apply various control and learning algorithms. It can either be set up as a rotating disk or as a furuta pendulum (see image). Encoder values of the rotary arm and the pendulum can be measured and a input voltage can be applied. If the pendulum is used the angle of the rotary arm is limited to one turn due to the connection of the encoder.
 In order to not damage the hardware limitations on voltage and safety mechanisms have to be implemented in software.
 
@@ -26,6 +26,20 @@ You also must have _pip_ installed (in most cases conda did this already for you
 $ sudo apt-get install python3-pip 
 ```
 This requires a version of the HIL SDK that supports buffer overwrite on overflow (circular buffers). (The mirror posted above supports buffer overflow.)
+
+#### Camera installation: Blackfly Flir
+
+For vison-based hardware experiments the [Flir Blackfly S](https://www.flir.de/products/blackfly-s-usb3/) is required.
+
+Install the non-python [Spinnaker SDK](https://www.flir.de/products/spinnaker-sdk/) and its requirements for connecting to the Blackfly Camera. After that use the whl file provided (Version must match operating system and your Python version!) by running
+
+```
+pip install package/blackfly/spinnaker_python-1.23.0.27-cp36-cp36m-linux_x86_64.whl
+```
+
+if you use Python 3.6. Alternatively, download the appropriate whl file for your Python version and operating system under https://www.flir.de/products/spinnaker-sdk/.
+
+
 
 #### Repository installation
 You can install the driver by cloning and pip-installing the repository from above:

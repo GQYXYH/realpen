@@ -14,50 +14,37 @@ def angle_normalize(x):
 
 
 def swing_up_reward(theta: float, alpha: float, alpha_dot, theta_dot, target_angle: float = 0.0):
-    # # STANDARD REWARD
-    # reward = 1 - (
-    #         (0.8 * np.abs(alpha) + 0.2 * np.abs(target_angle - theta))
-    #         / np.pi
-    # )
-    #
+    # STANDARD REWARD
+    reward = 1 - (
+            (0.8 * np.abs(alpha) + 0.2 * np.abs(target_angle - theta))
+            / np.pi
+    )
+
     # if abs(theta) > (80 * np.pi / 180):
     #     reward -= 1
     # # if np.abs(alpha) < 5 / 180 * np.pi: reward *= 2
     # # if np.abs(alpha) < 3 / 180 * np.pi: reward *= 2
-    # return max(reward, 0) ** 2  # Clip for the follow env case
+    return max(reward, 0) ** 2  # Clip for the follow env case
 
-    # Energy Based Reward
-    mr = 0.095
-    # Total length (m)
-    r = 0.085
-    mp = 0.024  # Mass (kg)
-    Lp = 0.129/2.0  # Total length (m)
-    e_pot = mp * 9.81 * Lp * (1 + np.cos(alpha))
-    e_kin = mp * (Lp * alpha_dot) ** 2
-    e = e_pot + e_kin
-
-    e_des = mp * 9.81 * Lp * 2
-    c = 1
-
-    reward = -c*((e_des - e)/e_des) ** 2 - (0.8 * np.abs(alpha) + 0.2 * np.abs(target_angle - theta))/ np.pi
-
-    # reward = e_pot - e_kin * max(0, (-abs(normalize_angle(alpha)) + 1) / 1) ** 2 \
-    #          - 0.002 * normalize_angle(params) ** 2
-    reward = float(reward)
-
-    return reward
-
-
-    # TUNED REWARD
-    # alpha_reward = 1 - alpha/np.pi**2
-    # alpha_reward += max(0, 0.3-(alpha/np.pi/0.06)**2)
-    # theta_reward = 1-theta/np.pi**2
-    # return 4*alpha_reward + theta_reward
-
-    # theta_reward = 1-(theta/(0.33*np.pi))**4
-    # alpha_reward = 4*np.exp(-3*np.abs(alpha/np.pi))
+    # # Energy Based Reward
+    # mr = 0.095
+    # # Total length (m)
+    # r = 0.085
+    # mp = 0.024  # Mass (kg)
+    # Lp = 0.129/2.0  # Total length (m)
+    # e_pot = mp * 9.81 * Lp * (1 + np.cos(alpha))
+    # e_kin = mp * (Lp * alpha_dot) ** 2
+    # e = e_pot + e_kin
     #
-    # return theta_reward + alpha_reward
+    # e_des = mp * 9.81 * Lp * 2
+    # c = 1
+    #
+    # reward = -c*((e_des - e)/e_des) ** 2 - (0.8 * np.abs(alpha) + 0.2 * np.abs(target_angle - theta))/ np.pi
+    #
+    # # reward = e_pot - e_kin * max(0, (-abs(normalize_angle(alpha)) + 1) / 1) ** 2 \
+    # #          - 0.002 * normalize_angle(params) ** 2
+    # reward = float(reward)
+    # return reward
 
 
 def extended_swing_up_reward(state, action: float, target_angle: float = 0.0):
