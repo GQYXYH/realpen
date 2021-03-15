@@ -88,6 +88,8 @@ class QubeBaseEnv(gym.Env):
         self._max_episode_steps = batch_size
         self._episode_steps = 0
         self._encoder_reset_steps = encoder_reset_steps
+        if not self._encoder_reset_steps:
+            self._encoder_reset_steps = int(1e8)
         self._steps_since_encoder_reset = 0
         self._target_angle = 0
 

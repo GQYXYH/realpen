@@ -63,11 +63,6 @@ class ImagePreprocessor:
 
         # image = cv2.Canny(image, 100, 200)
 
-        # normalize every color, not good
-        # image[:,:,0] = np.reshape(cv2.equalizeHist(np.reshape(image[:,:,0], (image_shape[0],image_shape[1],1))),(image_shape[0],image_shape[1]))
-        # image[:,:,1] = np.reshape(cv2.equalizeHist(np.reshape(image[:,:,1], (image_shape[0],image_shape[1],1))),(image_shape[0],image_shape[1]))
-        # image[:,:,2] = np.reshape(cv2.equalizeHist(np.reshape(image[:,:,2], (image_shape[0],image_shape[1],1))),(image_shape[0],image_shape[1]))
-
         image = np.reshape(image, self.image_shape_preprocessed)
         return image
 
@@ -124,29 +119,3 @@ class ImagePreprocessor:
             print("Images in " + path + " resized and preprocessed, still need to be NORMALIZED")
         else:
             print("Images in " + path + " resized, still need to be NORMALIZED")
-
-
-# def threshold_mask(image):
-#     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-#     lower_red = np.array([0, 0, 0])
-#     upper_red = np.array([10, 255, 255])
-#     mask = cv2.inRange(hsv, lower_red, upper_red)
-#     filtered = cv2.bitwise_and(image, image, mask=mask)
-#
-#     blur = cv2.blur(mask, (3, 3))
-#     _, image = cv2.threshold(blur, 50, 255, cv2.THRESH_BINARY)
-#     # cv2.GaussianBlur(image, (3,3),0)
-#     # cv2.connectedComponents(image)
-#     return image
-
-if __name__ == '__main__':
-    prepro = ImagePreprocessor(False)
-    import numpy as np
-
-    image = np.random.rand(740, 540, 3)
-    n = 1000
-    t = time.time()
-    for _ in range(n):
-        prepro.preprocess_and_normalize_image(image)
-
-    print((time.time() - t) / n * 1000)
