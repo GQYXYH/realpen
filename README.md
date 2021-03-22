@@ -1,6 +1,8 @@
 # Quanser Qube-Servo 2 (with Vision Input)
 The **[Quanser Qube-Servo 2](https://www.quanser.com/products/qube-servo-2/)** is a one input system that can be used to apply various control and learning algorithms. It can either be set up as a rotating disk or as a furuta pendulum (see image). Encoder values of the rotary arm and the pendulum can be measured and a input voltage can be applied. If the pendulum is used the angle of the rotary arm is limited to one turn due to the connection of the encoder.
-In order to not damage the hardware limitations on voltage and safety mechanisms have to be implemented in software.
+In order to not damage the hardware limitations on voltage and safety mechanisms have to be implemented in software. 
+
+Introductory literature on the dynamics of the system and the implementation with MATLAB can be found [here](https://www.quanser.com/products/qube-servo-2/) under Simulink Courseware.
 
 ## Hardware Setup
 
@@ -14,7 +16,7 @@ The setup is described in the Blue River Techs GitHub repository and definitely 
 
 It is recommended to use [conda](https://anaconda.org) as environment and repository management tool.
 
-The naming conventions in the BlueRiverTech repository contradict the ones in their documentation. The naming conventions described here work for the internal repository and are consistent. The GitHub repository is still under development and other useful tools and classes might be available sometime later.
+The naming conventions in the BlueRiverTech repository contradict the ones in their documentation. The naming conventions described here work for the internal repository and are consistent. The GitHub repository is stillInunder development and other useful tools and classes might be available sometime later.
 
 ### Prerequisites
 #### Driver installation: HIL SDK from Quanser [Hardware only]
