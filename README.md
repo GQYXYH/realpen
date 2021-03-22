@@ -1,10 +1,15 @@
 # Quanser Qube-Servo 2 (with Vision Input)
 The **[Quanser Qube-Servo 2](https://www.quanser.com/products/qube-servo-2/)** is a Furuta pendulum that can be used to apply various control and learning algorithms. Encoder values of the rotary arm and the pendulum can be measured and a input voltage can be applied. If the pendulum is used the angle of the rotary arm is limited to less than one turn due to the connection of the encoder.
-In order to not damage the hardware limitations on voltage and safety mechanisms have to be implemented in software (and hardware, described below).
+
+Introductory literature on the dynamics of the system and the implementation with MATLAB can be found [here](https://www.quanser.com/products/qube-servo-2/) under Simulink Courseware.
+
+
 <p align="center" float="left">
   <img src="hardware_setup/pictures/overview.jpg" height="200" />
   <img src="hardware_setup/pictures/qube.jpg" height="200" />
 </p>
+
+In order to not damage the hardware limitations on voltage and safety mechanisms have to be implemented in software (and hardware) as described below.
 
 Note: This repository is still under development, it is used and maintained by the Max-Planck-Institute for Intelligent Systems, ICS group and the DSME Institute at RWTH Aachen. Other useful tools and classes might be available sometime later.
 
