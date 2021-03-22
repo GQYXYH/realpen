@@ -1,20 +1,28 @@
 # Quanser Qube-Servo 2 (with Vision Input)
-The **[Quanser Qube-Servo 2](https://www.quanser.com/products/qube-servo-2/)** is a one input system that can be used to apply various control and learning algorithms. It can either be set up as a rotating disk or as a furuta pendulum (see image). Encoder values of the rotary arm and the pendulum can be measured and a input voltage can be applied. If the pendulum is used the angle of the rotary arm is limited to one turn due to the connection of the encoder.
-In order to not damage the hardware limitations on voltage and safety mechanisms have to be implemented in software.
+The **[Quanser Qube-Servo 2](https://www.quanser.com/products/qube-servo-2/)** is a Furuta pendulum that can be used to apply various control and learning algorithms. Encoder values of the rotary arm and the pendulum can be measured and a input voltage can be applied. If the pendulum is used the angle of the rotary arm is limited to less than one turn due to the connection of the encoder.
+In order to not damage the hardware limitations on voltage and safety mechanisms have to be implemented in software (and hardware, described below).
+<p align="center" float="left">
+  <img src="hardware_setup/pictures/overview.jpg" height="200" />
+  <img src="hardware_setup/pictures/qube.jpg" height="200" />
+</p>
 
-## Hardware Setup
+Note: This repository is still under development, it is used and maintained by the Max-Planck-Institute for Intelligent Systems, ICS group and the DSME Institute at RWTH Aachen. Other useful tools and classes might be available sometime later.
 
-Instructions for a standardized lab environemnt for vision-based experiments on the Furuta Pendulum can be found [here](./hardware_setup/instructions.md).
 
-## Setup and Use of a Python Interface for the Quanser Qube Servo 2
+## Setup
 The *Qube-Servo 2* is a furuta pendulum and can be used for various control and learning tasks. One way of communicating with the device is through a Python Interface. Quanser itself does not support a Python interface but Blue River Tech provides one on their [GitHub repository](https://github.com/BlueRiverTech/quanser-openai-driver). This repository is an extension to the development of Blue River Tech. The interface uses the HIL SDK from Quanser and provides an OpenAI Gym like API to communicate with the Qube Servo 2. Furthermore it comes with various implemented controllers and simulations (more of those below). To start with this repository it is recommended to start with the [Blue River Tech repository]((https://github.com/BlueRiverTech/quanser-openai-driver)) and their corresponding [whitepaper](https://arxiv.org/abs/2001.02254) to get an overview of the implemented code.
 
-### Software Setup.
-The setup is described in the Blue River Techs GitHub repository and definitely works in Python 3.6.7. Both repositories, the one on GitHub and this one have working ODE simulators but they are different. Both ODE simulation types seem to represent the dynamics of the pendulum and finding a better simulator is a matter of parameter tuning. In addition, this repository includes a new Mujoco simulation. More on the internal simulators can be found below. 
+
+## Hardware Setup (Vision-based Furuta Pendulum)
+
+Instructions for a robust hardware setup and a standardized lab environemnt for vision-based experiments on the Furuta Pendulum can be found [here](./hardware_setup/instructions.md).
+
+## Software Setup
+The setup is described in the Blue River Techs GitHub repository and was tested in Python 3.6.7. Both repositories, the Blue River Tech repository on GitHub and this one have working ODE simulators but they are different. Both ODE simulation types seem to represent the dynamics of the pendulum and finding a better simulator is a matter of parameter tuning. In addition, this repository includes a new Mujoco simulation. More on the internal simulators can be found below. 
 
 It is recommended to use [conda](https://anaconda.org) as environment and repository management tool.
 
-The naming conventions in the BlueRiverTech repository contradict the ones in their documentation. The naming conventions described here work for the internal repository and are consistent. The GitHub repository is still under development and other useful tools and classes might be available sometime later.
+Some naming conventions in the BlueRiverTech repository are not consistent with the ones in their documentation. The naming conventions described here work for the internal repository and are consistent. 
 
 ### Prerequisites
 #### Driver installation: HIL SDK from Quanser [Hardware only]
@@ -25,27 +33,26 @@ You also must have _pip_ installed (in most cases conda did this already for you
 ```
 $ sudo apt-get install python3-pip 
 ```
-This requires a version of the HIL SDK that supports buffer overwrite on overflow (circular buffers). (The mirror posted above supports buffer overflow.)
+This repository requires a version of the HIL SDK that supports buffer overwrite on overflow (circular buffers). (The mirror posted above supports buffer overflow.)
 
-#### Camera installation: Blackfly Flir
+#### Camera setup (Blackfly Flir)
 
-For vison-based hardware experiments the [Flir Blackfly S](https://www.flir.de/products/blackfly-s-usb3/) is required.
+For vison-based hardware experiments the [Flir Blackfly S](https://www.flir.de/products/blackfly-s-usb3/) is required. The repository can of course be extended to support other cameras as well. The Flir Blackfly S camera is a high speed camera with 522 Hz that allows to run fast sequential experiments. It allows other steps of the control loop to be more resource heavy.
 
-Install the non-python [Spinnaker SDK](https://www.flir.de/products/spinnaker-sdk/) and its requirements for connecting to the Blackfly Camera. After that use the whl file provided (Version must match operating system and your Python version!) by running
+Install the non-python [Spinnaker SDK](https://www.flir.de/products/spinnaker-sdk/) and its requirements for connecting to the Blackfly Camera. Test the camera with their provided GUI first before you continue. After that use the whl file provided (Version must match operating system and your Python version!) by running
 
 ```
-pip install package/blackfly/spinnaker_python-1.23.0.27-cp36-cp36m-linux_x86_64.whl
+$ pip install package/blackfly/spinnaker_python-1.23.0.27-cp36-cp36m-linux_x86_64.whl
 ```
 
-if you use Python 3.6. Alternatively, download the appropriate whl file for your Python version and operating system under https://www.flir.de/products/spinnaker-sdk/.
+if you use Python 3.6 and your computer fulfills the hardware requiremts of the provided version. Alternatively, download the appropriate whl file for your Python version and operating system under https://www.flir.de/products/spinnaker-sdk/.
 
+We found that dependent on the USB port used at our computer the camera had a time delay of over 2 seconds. Make sure to chose a port that does not add a time delay.
 
 
 #### Repository installation
-You can install the driver by cloning and pip-installing the repository from above:
+You can install the driver by cloning and pip-installing the repository this repository. After changing your working directory into the folder run:
 ```
-$ git clone https://git.rwth-aachen.de/dsme/dsme-researcher/emmasgroup/quanser-qube-servo-2-driver.git
-$ cd quanser-qube-servo-2-driver
 $ pip install -e .
 ```
 
@@ -65,7 +72,7 @@ Once you have that setup: Run `example_code.py` (ensure the *Qube* is connected 
 $ python example_code.py
 ```
 
-While using the hardware errors can occurs which often can be solved by unplugging the device or restarting the computer.
+While using the hardware errors can occurs which often can be solved by unplugging the device or restarting the script.
 
 ### Usage
 #### OpenAI Gym interface
@@ -155,8 +162,8 @@ Extension modules for the `QubeBaseEnv` of the Quanser driver can be found in *[
 
 Furthermore, instead of using subclasses the behavior (observation, reward function, etc.) of an environment can be overwritten with wrapper which should work with most hardware classes and simulated classes (the version where a wrapper does not work should be obvious). Wrapper can be found in _wrapper.py_. Reward functions for this are provided in _rl_reward_functions.py_. 
 
-## Extras
-To change the dynamics of the system, additional weights can be applied (currently not at DSME). A setup to to change the orientation of the whole Qube is also available. Both extras are available at MPI in Tuebingen or Stuttgart.
+## Extras (Internal Lab Equipment of DSME)
+To change the dynamics of the system, additional weights can be applied. A setup to to change the orientation of the whole Qube is also available.
 
 ## Contribution
 If you contribute to this repository (this means if you change and want to push something which can affect other projects), you should prepare your contribution correctly:
@@ -168,3 +175,13 @@ If you contribute to this repository (this means if you change and want to push 
 * Non-Python files (including XML, HTML, CSS, JS, and Shell Scripts) should follow the [Google Style Guide](https://github.com/google/styleguide) for that language. YAML files should use 2 spaces for indentation.
 * If possible, integrate tests.
 * Remove `print(...)` statements if not needed.
+
+## Copyright
+
+### License
+
+Copyright © 2017, Max Planck Insitute for Intelligent Systems.
+
+Authors: Steffen Bleher, Moritz Schneider
+
+Released under the [MIT License](LICENSE).

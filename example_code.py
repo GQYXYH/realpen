@@ -12,7 +12,7 @@ import gym_brt.data.config.configuration as config
 import time
 
 
-def interact_with_down_environment(n_trials: int = 1, frequency: int = 120):
+def interact_with_down_environment(n_trials: int = 1, frequency: int = config.FREQUENCY):
     assert n_trials >= 1
     #calibrate(desired_theta=0.0)
     ret = 0
