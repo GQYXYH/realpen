@@ -16,15 +16,13 @@ The setup consists of the Quanser Qube Servo 2, a high speed camera and a white 
 
 The *Qube-Servo 2* can be connected to the computer via USB, the Power LED should be green and the USB LED should be red. The driver will be installed automatically, the USB LED will turn to green if successful. If a driver is already installed it is recommended to uninstall it before connecting the device, some communication errors between the hardware and Python can be avoided.
 
-The original power cables are not optimal as the pendulum may get caught in the plug when falling down. Especially when running long learning experiments on the hardware this may be annoying. An easy way around this is to get an angle plug from an electronics supply store and solder it onto the power cable (see [here](pictures/angle_plug.jpg)).
-
-We also glued rubber bumpers on the Qube next to the cable connecting the motor with the qube. This protects the cable when high voltages are applied and serves as hardware limits for the arm angle (see [here](pictures/bumpers.jpg)).
+The original power cables are not optimal as the pendulum may get caught in the plug when falling down. Especially when running long learning experiments on the hardware this may be annoying. An easy way around this is to get an angle plug from an electronics supply store and solder it onto the power cable. We also glued rubber bumpers on the Qube next to the cable connecting the motor with the qube. This protects the cable when high voltages are applied and serves as hardware limits for the arm angle. To reduce the change in dynamics over time due to the encoder cable moving we glued the encoder cable plug to the qube (see all modifications [here](pictures/bumper.pdf)).
 
 ## Camera Setup
 
 We use a high speed camera for running vision-based experiments. The [Flir Blackfly S](https://www.flir.de/products/blackfly-s-usb3/) runs at a sample frequency of 522 Hz and thereby allows to run serial control cycles where a picture is taken and a control input calcualted afterwards.
 
-The camera should be mounted on a tripod to not change the position of the camera. We added a flat LED light source for controlled light conditions (details see [picture](pictures/camera_setup.png)).
+The camera should be mounted on a tripod to not change the position of the camera. We added a flat LED light source for controlled light conditions.
 
 <p align="center" float="left">
   <img src="pictures/camera_front.jpg" height="300" />
