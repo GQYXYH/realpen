@@ -1,17 +1,19 @@
-# Quanser Qube-Servo 2 (with Vision Input)
+# Vision-based Furuta Pendulum based on the Quanser Qube-Servo 2
+
 The **[Quanser Qube-Servo 2](https://www.quanser.com/products/qube-servo-2/)** is a Furuta pendulum that can be used to apply various control and learning algorithms. Encoder values of the rotary arm and the pendulum can be measured and a input voltage can be applied. If the pendulum is used the angle of the rotary arm is limited to less than one turn due to the connection of the encoder.
 
 Introductory literature on the dynamics of the system and the implementation with MATLAB can be found [here](https://www.quanser.com/products/qube-servo-2/) under Simulink Courseware.
 
+We added a camera setup to the Furuta Pendulum for vision-based learning research. Simulations in Mujoco and PyBullet can be used as well. 
 
 <p align="center" float="left">
   <img src="hardware_setup/pictures/overview.jpg" height="200" />
   <img src="hardware_setup/pictures/qube.jpg" height="200" />
 </p>
 
-In order to not damage the hardware limitations on voltage and safety mechanisms have to be implemented in software (and hardware) as described below.
-
 Note: This repository is still under development, it is used and maintained by the Max-Planck-Institute for Intelligent Systems, ICS group and the DSME Institute at RWTH Aachen. Other useful tools and classes might be available sometime later.
+
+Note: In order to not damage the hardware limitations on voltage and safety mechanisms have to be implemented in software (and hardware) as described below.
 
 
 ## Setup
@@ -20,7 +22,7 @@ The *Qube-Servo 2* is a furuta pendulum and can be used for various control and 
 
 ## Hardware Setup (Vision-based Furuta Pendulum)
 
-Instructions for a robust hardware setup and a standardized lab environemnt for vision-based experiments on the Furuta Pendulum can be found [here](./hardware_setup/instructions.md).
+Instructions for a robust hardware setup and a standardized lab environment for vision-based experiments on the Furuta Pendulum can be found [here](./hardware_setup/instructions.md).
 
 ## Software Setup
 The setup is described in the Blue River Techs GitHub repository and was tested in Python 3.6.7. Both repositories, the Blue River Tech repository on GitHub and this one have working ODE simulators but they are different. Both ODE simulation types seem to represent the dynamics of the pendulum and finding a better simulator is a matter of parameter tuning. In addition, this repository includes a new Mujoco simulation. More on the internal simulators can be found below. 
@@ -50,7 +52,7 @@ Install the non-python [Spinnaker SDK](https://www.flir.de/products/spinnaker-sd
 $ pip install package/blackfly/spinnaker_python-1.23.0.27-cp36-cp36m-linux_x86_64.whl
 ```
 
-if you use Python 3.6 and your computer fulfills the hardware requiremts of the provided version. Alternatively, download the appropriate whl file for your Python version and operating system under https://www.flir.de/products/spinnaker-sdk/.
+if you use Python 3.6 and your computer fulfills the hardware requirements of the provided version. Alternatively, download the appropriate whl file for your Python version and operating system under https://www.flir.de/products/spinnaker-sdk/.
 
 We found that dependent on the USB port used at our computer the camera had a time delay of over 2 seconds. Make sure to chose a port that does not add a time delay.
 
@@ -109,7 +111,7 @@ The most common case when the env was not properly closed: you can not reopen th
 > 2. Use the rm command to remove it.
 >   - Ex: rm /dev/shm/sem.qube_servo2_usb$xxxxxxxxxxxxx
 
-The normal `QubeBaseEnv` should not be initialised solely. There exist multiple subclasses like `QubeSwingupEnv` and `QubeBalanceEnv` that implement specific control problems and their corresponding observation types. Furthermore, this repository contains multiple extensions (wrapper, more subclasses, etc. to change observation type, reward functions and more) which can be found in the directory [gym_brt/envs/reinforcementlearning_extensions](./gym_brt/envs/reinforcementlearning_extensions).
+The normal `QubeBaseEnv` should not be initialized solely. There exist multiple subclasses like `QubeSwingupEnv` and `QubeBalanceEnv` that implement specific control problems and their corresponding observation types. Furthermore, this repository contains multiple extensions (wrapper, more subclasses, etc. to change observation type, reward functions and more) which can be found in the directory [gym_brt/envs/reinforcementlearning_extensions](./gym_brt/envs/reinforcementlearning_extensions).
 
 It is recommended to use the `QubeSwingupEnv` or its subclasses since the encoder values of the environment are set to 0 at the beginning which means that either the pendulum in its initial condition is interpreted as a angle of $\pi$ or $0$ respectively. Therefore, inaccuracy in the initial conditions lead to wrong states in the environment. Especially the simulators are just tested for the `QubeSwingupEnv`.
 
