@@ -81,6 +81,10 @@ $ python example_code.py
 
 While using the hardware errors can occurs which often can be solved by unplugging the device or restarting the script.
 
+**Known issues during installation**:
+
+- **Setuptools version issue:** Some issues during the installation can be resolved by using setuptools<61.0.0.
+
 ### Usage
 #### OpenAI Gym interface
 Usage is very similar to most [OpenAI Gym](https://github.com/openai/gym) environments. Important and different to normal OpenAI Gym is that if you use the hardware classes it requires that you close the environment when finished (See WARNING). This can be done with context managers using a `with` statement:
