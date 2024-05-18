@@ -9,6 +9,7 @@ from gym_brt.envs.qube_balance_env import (
 
 from gym_brt.envs.qube_swingup_env import (
     QubeSwingupEnv,
+    QubeSwingupEnv2
 )
 
 from gym_brt.envs.reinforcementlearning_extensions.rl_gym_classes import (

@@ -9,7 +9,7 @@ from scipy import signal
 from gym_brt import configuration as config
 
 # Set the motor saturation limits for the Aero and Qube
-AERO_MAX_VOLTAGE = 15.0
+AERO_MAX_VOLTAGE = 25.0
 
 
 def _convert_state(state):
@@ -205,7 +205,8 @@ class QubeFlipUpControl(Control):
         theta, alpha, theta_dot, alpha_dot = state
 
         # If pendulum is within 20 degrees of upright, enable balance control
-        if np.abs(alpha) <= (20.0 * np.pi / 180.0):
+        if np.abs(alpha) <= (30.0 * np.pi / 180.0):
+            print("balance")
             action = self._action_hold(theta, alpha, theta_dot, alpha_dot)
         else:
             action = self._flip_up(theta, alpha, theta_dot, alpha_dot)

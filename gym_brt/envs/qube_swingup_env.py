@@ -41,7 +41,7 @@ from __future__ import division
 
 import numpy as np
 from gym import spaces
-from gym_brt.envs.qube_base_env import QubeBaseEnv
+from gym_brt.envs.qube_base_env import QubeBaseEnv,QubeBaseEnv2
 from gym_brt.envs import swing_up_reward
 
 
@@ -60,7 +60,20 @@ class QubeSwingupEnv(QubeBaseEnv):
         state = self._reset_down()
         return state
 
+class QubeSwingupEnv2(QubeBaseEnv2):
+    def _reward(self):
+        return swing_up_reward(self._theta, self._alpha, self._alpha_dot, self._theta_dot, self._target_angle)
 
+    def _isdone(self):
+        done = False
+        done |= self._episode_steps >= self._max_episode_steps
+        done |= abs(self._theta) > (90 * np.pi / 180)
+        return done
+
+    def reset(self):
+        super(QubeSwingupEnv2, self).reset()
+        state = self._reset_down()
+        return state
 class QubeSwingupSparseEnv(QubeSwingupEnv):
     def _reward(self):
         within_range = True
